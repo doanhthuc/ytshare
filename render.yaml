@@ -27,7 +27,6 @@ services:
     name: ytshare-api
     runtime: docker
     plan: free
-    region: singapore
     rootDir: backend
     dockerfilePath: ./Dockerfile
     healthCheckPath: /healthz
