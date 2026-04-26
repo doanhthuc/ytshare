@@ -23,7 +23,7 @@ func ExtractYouTubeID(raw string) (string, error) {
 
 	u, err := url.Parse(raw)
 	if err != nil {
-		return "", fmt.Errorf("%w: %v", ErrInvalidYouTubeURL, err)
+		return "", fmt.Errorf("%w: %s", ErrInvalidYouTubeURL, err.Error())
 	}
 
 	host := strings.ToLower(strings.TrimPrefix(u.Host, "www."))

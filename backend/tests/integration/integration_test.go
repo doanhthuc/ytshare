@@ -93,7 +93,7 @@ func TestEndToEnd_SignUpShareNotify(t *testing.T) {
 		"password": "password123",
 	})
 	require.Equal(t, http.StatusCreated, resp.StatusCode)
-	var publisher auth.AuthResponse
+	var publisher auth.Response
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&publisher))
 	resp.Body.Close()
 
@@ -104,7 +104,7 @@ func TestEndToEnd_SignUpShareNotify(t *testing.T) {
 		"password": "password123",
 	})
 	require.Equal(t, http.StatusCreated, resp.StatusCode)
-	var subscriber auth.AuthResponse
+	var subscriber auth.Response
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&subscriber))
 	resp.Body.Close()
 
@@ -116,8 +116,11 @@ func TestEndToEnd_SignUpShareNotify(t *testing.T) {
 	q.Set("access_token", subscriber.AccessToken)
 	u.RawQuery = q.Encode()
 
-	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+	conn, dialResp, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	require.NoError(t, err)
+	if dialResp != nil {
+		_ = dialResp.Body.Close()
+	}
 	defer conn.Close()
 
 	// Dial returns when the HTTP 101 lands on the client side, but the

@@ -31,8 +31,8 @@ type SessionUser struct {
 	Name  string    `json:"name"`
 }
 
-// AuthResponse is the standard envelope for sign-in / sign-up / refresh.
-type AuthResponse struct {
+// Response is the standard envelope for sign-in / sign-up / refresh.
+type Response struct {
 	User         SessionUser `json:"user"`
 	AccessToken  string      `json:"accessToken"`
 	RefreshToken string      `json:"refreshToken"`

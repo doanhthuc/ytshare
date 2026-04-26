@@ -20,9 +20,11 @@ linters:
     - nilerr
     - rowserrcheck
     - sqlclosecheck
-    # Style (Uber Go-aligned)
-    - gofumpt
-    - goimports
+    # Style (Uber Go-aligned).
+    # gofumpt + goimports are checked by `make fmt-check` (a separate CI
+    # step), which runs the toolchain-current binaries. Letting golangci-
+    # lint's bundled-and-pinned copies lint them again creates noisy false
+    # positives on the import-grouping heuristic.
     - revive
     - misspell
     - unconvert
@@ -33,8 +35,6 @@ linters:
 linters-settings:
   gocyclo:
     min-complexity: 15
-  goimports:
-    local-prefixes: backend
   revive:
     rules:
       # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md
