@@ -1,0 +1,24 @@
+# Build artifacts
+bin/
+*.exe
+
+# Test / coverage
+*.test
+*.out
+*.cover
+coverage.out
+
+# Vendored deps (we use the Go module cache instead)
+vendor/
+
+# Env
+.env
+.env.local
+!.env.example
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo

@@ -1,0 +1,53 @@
+# docker-compose.dev.yml — local development infrastructure only.
+#
+# Spins up Postgres + Redis on the host's network so you can run the
+# Go backend (`make run`) and the Vite frontend (`pnpm dev`) directly
+# on your machine and benefit from hot reload + native debugging.
+#
+# Usage:
+#
+#   docker compose -f docker-compose.dev.yml up -d        # start
+#   docker compose -f docker-compose.dev.yml ps           # status
+#   docker compose -f docker-compose.dev.yml logs -f      # tail logs
+#   docker compose -f docker-compose.dev.yml down         # stop, keep data
+#   docker compose -f docker-compose.dev.yml down -v      # stop + wipe DB
+#
+# The full app stack (with backend/frontend in containers) lives in
+# `docker-compose.yml` and is meant for an end-to-end production-like run.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ytshare-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ytshare
+      POSTGRES_PASSWORD: ytshare
+      POSTGRES_DB: ytshare
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ytshare -d ytshare"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: ytshare-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:

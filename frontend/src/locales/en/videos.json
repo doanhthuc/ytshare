@@ -1,0 +1,35 @@
+{
+  "list": {
+    "title": "Shared videos",
+    "subtitle": "Most recently shared YouTube videos from the community.",
+    "empty": "No videos yet — be the first to share one!",
+    "loading": "Loading videos..."
+  },
+  "share": {
+    "title": "Share a YouTube video",
+    "subtitle": "Paste any YouTube link and we'll detect the video for you.",
+    "url": "YouTube URL",
+    "urlPlaceholder": "https://www.youtube.com/watch?v=...",
+    "titleField": "Title (optional)",
+    "titlePlaceholder": "Give it a custom title",
+    "description": "Description (optional)",
+    "descriptionPlaceholder": "Why are you sharing this?",
+    "submit": "Share video",
+    "submitting": "Sharing..."
+  },
+  "card": {
+    "sharedBy": "Shared by {{name}}",
+    "watch": "Watch on YouTube"
+  },
+  "validation": {
+    "urlRequired": "YouTube URL is required",
+    "urlInvalid": "Enter a valid URL"
+  },
+  "toast": {
+    "shared": "Your video has been shared",
+    "invalidUrl": "We couldn't recognize that as a YouTube link",
+    "alreadyShared": "Someone already shared this video",
+    "genericError": "Could not share the video. Please try again.",
+    "newShare": "{{name}} shared: {{title}}"
+  }
+}

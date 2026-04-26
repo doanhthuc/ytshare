@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+.vite/
+
+# Env
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# TS incremental
+*.tsbuildinfo
+
+# Caches / linters
+.eslintcache
+
+# Test
+coverage/
+playwright-report/
+test-results/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Anti-lockfile noise (this project uses pnpm)
+package-lock.json
+yarn.lock
+bun.lockb

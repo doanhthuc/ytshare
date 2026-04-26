@@ -1,0 +1,31 @@
+{
+  "app": {
+    "name": "YouTube Share",
+    "loading": "Đang tải..."
+  },
+  "nav": {
+    "videos": "Trang chủ",
+    "share": "Chia sẻ",
+    "shorts": "Shorts",
+    "subscriptions": "Kênh đăng ký",
+    "you": "Bạn",
+    "create": "Tạo",
+    "shareVideo": "Chia sẻ video",
+    "search": "Tìm kiếm"
+  },
+  "notifications": {
+    "title": "Thông báo",
+    "empty": "Chưa có thông báo",
+    "loading": "Đang tải...",
+    "loadMore": "Tải thêm",
+    "sharedAgo": "{{time}} trước"
+  },
+  "actions": {
+    "signOut": "Đăng xuất",
+    "back": "Quay lại"
+  },
+  "error": {
+    "title": "Đã có lỗi xảy ra",
+    "tryAgain": "Thử lại"
+  }
+}

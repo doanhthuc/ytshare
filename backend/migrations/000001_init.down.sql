@@ -1,0 +1,8 @@
+-- Reverse of 000001_init.
+
+BEGIN;
+
+DROP TABLE IF EXISTS videos;
+DROP TABLE IF EXISTS users;
+
+COMMIT;

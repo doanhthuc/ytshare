@@ -1,0 +1,73 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+:root {
+  --token-surface-0: oklch(0.13 0 0);
+  --token-surface-1: oklch(0.18 0 0);
+  --token-surface-2: oklch(0.24 0 0);
+  --token-surface-3: oklch(0.3 0 0);
+  --token-text-1: oklch(0.98 0 0);
+  --token-text-2: oklch(0.72 0 0);
+  --token-border: oklch(0.27 0 0);
+  --token-accent-1: oklch(0.62 0.23 27);
+  --token-accent-foreground: oklch(0.98 0 0);
+  --token-success: oklch(0.68 0.16 150);
+  --token-warning: oklch(0.8 0.14 85);
+  --token-danger: oklch(0.6 0.2 25);
+  --radius: 0.75rem;
+
+  color-scheme: dark;
+}
+
+@theme {
+  --color-background: var(--token-surface-0);
+  --color-foreground: var(--token-text-1);
+  --color-muted: var(--token-surface-2);
+  --color-muted-foreground: var(--token-text-2);
+  --color-card: var(--token-surface-1);
+  --color-card-foreground: var(--token-text-1);
+  --color-surface-2: var(--token-surface-2);
+  --color-surface-3: var(--token-surface-3);
+  --color-border: var(--token-border);
+  --color-primary: var(--token-accent-1);
+  --color-primary-foreground: var(--token-accent-foreground);
+  --color-success: var(--token-success);
+  --color-warning: var(--token-warning);
+  --color-danger: var(--token-danger);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: 'Roboto', 'Geist', 'Inter', 'Segoe UI', sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+.container-app {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 100%;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  scrollbar-width: none;
+}

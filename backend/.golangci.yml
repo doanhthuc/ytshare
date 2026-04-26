@@ -1,0 +1,65 @@
+# golangci-lint configuration tuned for the Uber Go style guide.
+# https://github.com/uber-go/guide/blob/master/style.md
+
+run:
+  timeout: 5m
+  go: "1.22"
+
+linters:
+  disable-all: true
+  enable:
+    # Correctness
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    - bodyclose
+    - errorlint
+    - nilerr
+    - rowserrcheck
+    - sqlclosecheck
+    # Style (Uber Go-aligned)
+    - gofumpt
+    - goimports
+    - revive
+    - misspell
+    - unconvert
+    - gocritic
+    - gocyclo
+    - gosec
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+  goimports:
+    local-prefixes: github.com/thucpham/youtube-share/backend
+  revive:
+    rules:
+      # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md
+      - name: var-naming
+      - name: package-comments
+      - name: receiver-naming
+      - name: unused-parameter
+      - name: empty-block
+      - name: superfluous-else
+      - name: error-return
+      - name: error-strings
+      - name: errorf
+      - name: if-return
+      - name: increment-decrement
+      - name: range
+      - name: time-naming
+      - name: indent-error-flow
+      - name: exported
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec
+        - gocyclo
+        - errcheck

@@ -1,0 +1,31 @@
+{
+  "app": {
+    "name": "YouTube Share",
+    "loading": "Loading..."
+  },
+  "nav": {
+    "videos": "Home",
+    "share": "Share",
+    "shorts": "Shorts",
+    "subscriptions": "Subscriptions",
+    "you": "You",
+    "create": "Create",
+    "shareVideo": "Share video",
+    "search": "Search"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications",
+    "loading": "Loading...",
+    "loadMore": "Load more",
+    "sharedAgo": "{{time}} ago"
+  },
+  "actions": {
+    "signOut": "Sign out",
+    "back": "Back"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "tryAgain": "Try again"
+  }
+}

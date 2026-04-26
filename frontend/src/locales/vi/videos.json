@@ -1,0 +1,35 @@
+{
+  "list": {
+    "title": "Video đã chia sẻ",
+    "subtitle": "Những video YouTube được chia sẻ gần đây nhất.",
+    "empty": "Chưa có video nào — hãy là người đầu tiên chia sẻ!",
+    "loading": "Đang tải video..."
+  },
+  "share": {
+    "title": "Chia sẻ video YouTube",
+    "subtitle": "Dán bất kỳ liên kết YouTube nào và chúng tôi sẽ nhận diện video.",
+    "url": "Liên kết YouTube",
+    "urlPlaceholder": "https://www.youtube.com/watch?v=...",
+    "titleField": "Tiêu đề (tuỳ chọn)",
+    "titlePlaceholder": "Đặt tiêu đề riêng",
+    "description": "Mô tả (tuỳ chọn)",
+    "descriptionPlaceholder": "Vì sao bạn chia sẻ video này?",
+    "submit": "Chia sẻ video",
+    "submitting": "Đang chia sẻ..."
+  },
+  "card": {
+    "sharedBy": "Chia sẻ bởi {{name}}",
+    "watch": "Xem trên YouTube"
+  },
+  "validation": {
+    "urlRequired": "Vui lòng nhập liên kết YouTube",
+    "urlInvalid": "Liên kết không hợp lệ"
+  },
+  "toast": {
+    "shared": "Đã chia sẻ video",
+    "invalidUrl": "Không nhận diện được liên kết YouTube",
+    "alreadyShared": "Video này đã được chia sẻ",
+    "genericError": "Không thể chia sẻ video. Vui lòng thử lại.",
+    "newShare": "{{name}} đã chia sẻ: {{title}}"
+  }
+}

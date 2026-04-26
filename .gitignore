@@ -1,0 +1,82 @@
+# ===== Node / pnpm / yarn / npm =====
+node_modules/
+.pnpm-store/
+.pnp.*
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.yarn/sdks
+
+# Lockfile policy: we commit `pnpm-lock.yaml` (frontend uses pnpm).
+# Anti-lockfile noise from incidental package managers:
+package-lock.json
+yarn.lock
+bun.lockb
+
+# ===== Go =====
+vendor/
+bin/
+*.exe
+*.test
+*.out
+*.cover
+coverage.out
+
+# ===== Build outputs =====
+dist/
+build/
+out/
+
+# ===== Vite / React =====
+*.local
+.vite/
+# TanStack Router auto-generated file is INTENTIONALLY committed — the
+# Vite plugin regenerates it on `dev` / `build` and TS needs it to
+# typecheck on a fresh clone. Do NOT add `routeTree.gen.ts` here.
+
+# ===== Env files =====
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# ===== Editors / IDEs =====
+.idea/
+.vscode/
+*.swp
+*.swo
+*.iml
+.DS_Store
+Thumbs.db
+
+# ===== Logs =====
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===== Test / coverage =====
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# ===== Caches =====
+.turbo/
+.cache/
+.parcel-cache/
+.eslintcache
+.tsbuildinfo
+*.tsbuildinfo
+
+# ===== Docker =====
+# (.dockerignore IS committed — it controls Docker build context.)
+
+# ===== Misc =====
+*.tsbuildinfo
+.history/
