@@ -23,7 +23,10 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          # Pinned by the package.json `packageManager` field.
+          # Version is pinned by the `packageManager` field in
+          # frontend/package.json. The action looks at repo root by
+          # default, so point it at the right file explicitly.
+          package_json_file: frontend/package.json
           run_install: false
 
       - uses: actions/setup-node@v4
