@@ -1,13 +1,9 @@
 import { Outlet, createFileRoute } from '@tanstack/react-router';
 
-import { requireAuth } from '@/modules/auth/utils';
 import { HorizontalNav, Sidebar } from '@/shared/components';
 import { useNotificationsSocket } from '@/modules/notifications';
 
 export const Route = createFileRoute('/_private')({
-  beforeLoad: () => {
-    requireAuth();
-  },
   component: PrivateLayout,
 });
 

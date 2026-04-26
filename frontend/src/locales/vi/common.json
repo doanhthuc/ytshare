@@ -21,6 +21,7 @@
     "sharedAgo": "{{time}} trước"
   },
   "actions": {
+    "signIn": "Đăng nhập",
     "signOut": "Đăng xuất",
     "back": "Quay lại"
   },

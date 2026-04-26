@@ -14,7 +14,8 @@ import { Route as PrivateRouteImport } from './routes/_private'
 import { Route as PrivateIndexRouteImport } from './routes/_private/index'
 import { Route as PublicSignupRouteImport } from './routes/_public/signup'
 import { Route as PublicSigninRouteImport } from './routes/_public/signin'
-import { Route as PrivateShareRouteImport } from './routes/_private/share'
+import { Route as PrivateAuthRouteImport } from './routes/_private/_auth'
+import { Route as PrivateAuthShareRouteImport } from './routes/_private/_auth.share'
 
 const PublicRoute = PublicRouteImport.update({
   id: '/_public',
@@ -39,46 +40,52 @@ const PublicSigninRoute = PublicSigninRouteImport.update({
   path: '/signin',
   getParentRoute: () => PublicRoute,
 } as any)
-const PrivateShareRoute = PrivateShareRouteImport.update({
+const PrivateAuthRoute = PrivateAuthRouteImport.update({
+  id: '/_auth',
+  getParentRoute: () => PrivateRoute,
+} as any)
+const PrivateAuthShareRoute = PrivateAuthShareRouteImport.update({
   id: '/share',
   path: '/share',
-  getParentRoute: () => PrivateRoute,
+  getParentRoute: () => PrivateAuthRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PrivateIndexRoute
-  '/share': typeof PrivateShareRoute
   '/signin': typeof PublicSigninRoute
   '/signup': typeof PublicSignupRoute
+  '/share': typeof PrivateAuthShareRoute
 }
 export interface FileRoutesByTo {
   '/': typeof PrivateIndexRoute
-  '/share': typeof PrivateShareRoute
   '/signin': typeof PublicSigninRoute
   '/signup': typeof PublicSignupRoute
+  '/share': typeof PrivateAuthShareRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_private': typeof PrivateRouteWithChildren
   '/_public': typeof PublicRouteWithChildren
-  '/_private/share': typeof PrivateShareRoute
+  '/_private/_auth': typeof PrivateAuthRouteWithChildren
   '/_public/signin': typeof PublicSigninRoute
   '/_public/signup': typeof PublicSignupRoute
   '/_private/': typeof PrivateIndexRoute
+  '/_private/_auth/share': typeof PrivateAuthShareRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/share' | '/signin' | '/signup'
+  fullPaths: '/' | '/signin' | '/signup' | '/share'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/share' | '/signin' | '/signup'
+  to: '/' | '/signin' | '/signup' | '/share'
   id:
     | '__root__'
     | '/_private'
     | '/_public'
-    | '/_private/share'
+    | '/_private/_auth'
     | '/_public/signin'
     | '/_public/signup'
     | '/_private/'
+    | '/_private/_auth/share'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -123,23 +130,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicSigninRouteImport
       parentRoute: typeof PublicRoute
     }
-    '/_private/share': {
-      id: '/_private/share'
+    '/_private/_auth': {
+      id: '/_private/_auth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof PrivateAuthRouteImport
+      parentRoute: typeof PrivateRoute
+    }
+    '/_private/_auth/share': {
+      id: '/_private/_auth/share'
       path: '/share'
       fullPath: '/share'
-      preLoaderRoute: typeof PrivateShareRouteImport
-      parentRoute: typeof PrivateRoute
+      preLoaderRoute: typeof PrivateAuthShareRouteImport
+      parentRoute: typeof PrivateAuthRoute
     }
   }
 }
 
+interface PrivateAuthRouteChildren {
+  PrivateAuthShareRoute: typeof PrivateAuthShareRoute
+}
+
+const PrivateAuthRouteChildren: PrivateAuthRouteChildren = {
+  PrivateAuthShareRoute: PrivateAuthShareRoute,
+}
+
+const PrivateAuthRouteWithChildren = PrivateAuthRoute._addFileChildren(
+  PrivateAuthRouteChildren,
+)
+
 interface PrivateRouteChildren {
-  PrivateShareRoute: typeof PrivateShareRoute
+  PrivateAuthRoute: typeof PrivateAuthRouteWithChildren
   PrivateIndexRoute: typeof PrivateIndexRoute
 }
 
 const PrivateRouteChildren: PrivateRouteChildren = {
-  PrivateShareRoute: PrivateShareRoute,
+  PrivateAuthRoute: PrivateAuthRouteWithChildren,
   PrivateIndexRoute: PrivateIndexRoute,
 }
 

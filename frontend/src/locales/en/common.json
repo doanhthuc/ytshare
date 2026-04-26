@@ -21,6 +21,7 @@
     "sharedAgo": "{{time}} ago"
   },
   "actions": {
+    "signIn": "Sign in",
     "signOut": "Sign out",
     "back": "Back"
   },

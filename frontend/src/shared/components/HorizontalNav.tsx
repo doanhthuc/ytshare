@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { Bell, LogOut, Menu, Mic, Plus, Search, Youtube } from 'lucide-react';
+import { Bell, LogIn, LogOut, Menu, Mic, Plus, Search, Youtube } from 'lucide-react';
 
 import { Button } from '@/components/ui';
 import { useAuthStore } from '@/modules/auth/stores';
@@ -79,57 +79,67 @@ export function HorizontalNav() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link
-            to="/share"
-            className="hidden sm:inline-flex items-center gap-2 rounded-full bg-[var(--color-surface-2)] px-4 py-2 text-sm font-medium hover:bg-[var(--color-surface-3)]"
-          >
-            <Plus className="h-4 w-4" />
-            {t('nav.shareVideo')}
-          </Link>
-          <div className="relative">
-            <button
-              ref={bellRef}
-              type="button"
-              aria-label="Notifications"
-              aria-expanded={notifOpen}
-              onClick={handleBellClick}
-              className="relative grid h-10 w-10 place-items-center rounded-full hover:bg-[var(--color-surface-2)]"
-            >
-              <Bell className="h-5 w-5" />
-              {unreadCount > 0 ? (
-                <span
-                  aria-label={`${unreadCount} unread notifications`}
-                  className="absolute right-1 top-1 grid min-w-[18px] h-[18px] place-items-center rounded-full bg-[var(--color-primary)] px-1 text-[10px] font-semibold leading-none text-[var(--color-primary-foreground)] ring-2 ring-[var(--color-background)]"
-                >
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              ) : null}
-            </button>
-            <NotificationsPopover
-              open={notifOpen}
-              onClose={() => setNotifOpen(false)}
-              anchorRef={bellRef}
-            />
-          </div>
           {session ? (
-            <div className="flex items-center gap-2">
-              <div
-                className="grid h-8 w-8 place-items-center rounded-full bg-[var(--color-primary)] text-sm font-semibold text-[var(--color-primary-foreground)]"
-                title={session.user.name}
+            <>
+              <Link
+                to="/share"
+                className="hidden sm:inline-flex items-center gap-2 rounded-full bg-[var(--color-surface-2)] px-4 py-2 text-sm font-medium hover:bg-[var(--color-surface-3)]"
               >
-                {initial}
+                <Plus className="h-4 w-4" />
+                {t('nav.shareVideo')}
+              </Link>
+              <div className="relative">
+                <button
+                  ref={bellRef}
+                  type="button"
+                  aria-label="Notifications"
+                  aria-expanded={notifOpen}
+                  onClick={handleBellClick}
+                  className="relative grid h-10 w-10 place-items-center rounded-full hover:bg-[var(--color-surface-2)]"
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 ? (
+                    <span
+                      aria-label={`${unreadCount} unread notifications`}
+                      className="absolute right-1 top-1 grid min-w-[18px] h-[18px] place-items-center rounded-full bg-[var(--color-primary)] px-1 text-[10px] font-semibold leading-none text-[var(--color-primary-foreground)] ring-2 ring-[var(--color-background)]"
+                    >
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  ) : null}
+                </button>
+                <NotificationsPopover
+                  open={notifOpen}
+                  onClose={() => setNotifOpen(false)}
+                  anchorRef={bellRef}
+                />
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => signOut()}
-                className="text-(--color-foreground) hover:bg-[var(--color-surface-2)]"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="sr-only">{t('actions.signOut')}</span>
-              </Button>
-            </div>
-          ) : null}
+              <div className="flex items-center gap-2">
+                <div
+                  className="grid h-8 w-8 place-items-center rounded-full bg-[var(--color-primary)] text-sm font-semibold text-[var(--color-primary-foreground)]"
+                  title={session.user.name}
+                >
+                  {initial}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => signOut()}
+                  className="text-(--color-foreground) hover:bg-[var(--color-surface-2)]"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="sr-only">{t('actions.signOut')}</span>
+                </Button>
+              </div>
+            </>
+          ) : (
+            <Link
+              to="/signin"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-4 py-2 text-sm font-medium text-[var(--color-primary)] hover:bg-[var(--color-surface-3)]"
+            >
+              <LogIn className="h-4 w-4" />
+              {t('actions.signIn')}
+            </Link>
+          )}
         </div>
       </div>
     </header>
