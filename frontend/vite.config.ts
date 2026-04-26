@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
@@ -29,6 +30,9 @@ export default defineConfig({
     sourcemap: false,
   },
 
+  // Vitest 2 ships against vite 5, while this project tracks vite 7. The
+  // type signatures clash but the runtime config is forward-compatible.
+  // @ts-expect-error vitest types don't match vite 7 UserConfig
   test: {
     environment: 'jsdom',
     globals: true,
