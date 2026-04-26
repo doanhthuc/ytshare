@@ -120,6 +120,12 @@ func TestEndToEnd_SignUpShareNotify(t *testing.T) {
 	require.NoError(t, err)
 	defer conn.Close()
 
+	// Dial returns when the HTTP 101 lands on the client side, but the
+	// server-side hub registration follows the response. Give it a moment
+	// so the broadcast below is not delivered before the subscriber is on
+	// the hub's roster.
+	time.Sleep(100 * time.Millisecond)
+
 	// 4) publisher shares a video
 	resp = postJSON(t, ts.URL+"/api/v1/videos", publisher.AccessToken, map[string]string{
 		"url":   "https://www.youtube.com/watch?v=dQw4w9WgXcQ",

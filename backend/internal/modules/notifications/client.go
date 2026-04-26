@@ -37,9 +37,9 @@ func NewClient(hub *Hub, conn *websocket.Conn, userID uuid.UUID, log *zap.Logger
 	}
 }
 
-// Run starts the read and write goroutines.
+// Run starts the read and write goroutines. The handler registers the
+// client with the hub synchronously before invoking Run.
 func (c *Client) Run(ctx context.Context) {
-	c.hub.Register(c)
 	go c.writeLoop(ctx)
 	c.readLoop()
 }

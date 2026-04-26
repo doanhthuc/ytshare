@@ -1,6 +1,7 @@
 package notifications
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -79,5 +80,13 @@ func (h *Handler) handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	client := NewClient(h.hub, conn, userID, h.log)
-	go client.Run(r.Context())
+	// Register synchronously before returning so a publisher racing the
+	// upgrade cannot broadcast into a hub that does not yet know about
+	// this client.
+	h.hub.Register(client)
+	// Detach from r.Context(): the request context is cancelled the moment
+	// this handler returns, which would tear down the upgraded connection
+	// immediately. The client lifecycle is bounded instead by the read
+	// loop (peer disconnect / read deadline) and by conn.Close().
+	go client.Run(context.Background())
 }
