@@ -1,5 +1,8 @@
 .PHONY: help dev up down reset migrate migrate-new test build lint fmt fmt-check tidy
 
+# Use bash for process substitution (`<(...)`) in fmt-check.
+SHELL       := /bin/bash
+
 GO          ?= go
 BIN         := bin/server
 COMPOSE_DEV := docker compose -f ../docker-compose.dev.yml
@@ -72,10 +75,10 @@ lint: ## Run golangci-lint.
 
 fmt: ## Format with gofumpt + goimports (local-prefix aware).
 	gofumpt -l -w .
-	goimports -local github.com/thucpham/youtube-share/backend -l -w .
+	goimports -local backend -l -w .
 
 fmt-check: ## Verify formatting (used in CI).
-	@diff -u <(echo -n) <(gofumpt -l . && goimports -local github.com/thucpham/youtube-share/backend -l .) \
+	@diff -u <(echo -n) <(gofumpt -l . && goimports -local backend -l .) \
 		|| (echo "Run 'make fmt' to format the code"; exit 1)
 
 tidy: ## Sync go.mod / go.sum.
