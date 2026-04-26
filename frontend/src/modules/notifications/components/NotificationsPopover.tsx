@@ -1,8 +1,22 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Skeleton } from '@/components/ui';
 import { formatRelativeTime } from '@/shared/utils/formatRelativeTime';
 
 import { useNotificationsFeed } from '../hooks';
+
+function NotificationItemSkeleton() {
+  return (
+    <li className="flex gap-3 px-4 py-3">
+      <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+      <div className="min-w-0 flex-1 space-y-2">
+        <Skeleton className="h-4 w-11/12" />
+        <Skeleton className="h-3 w-1/3" />
+      </div>
+      <Skeleton className="h-12 w-20 shrink-0 rounded" />
+    </li>
+  );
+}
 
 type Props = {
   open: boolean;
@@ -77,7 +91,11 @@ export function NotificationsPopover({ open, onClose, anchorRef }: Props) {
 
       <div ref={scrollRef} className="max-h-[70vh] overflow-y-auto py-2">
         {isLoading ? (
-          <p className="px-4 py-6 text-sm text-muted-foreground">{t('notifications.loading')}</p>
+          <ul aria-label={t('notifications.loading')} aria-busy="true">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <NotificationItemSkeleton key={i} />
+            ))}
+          </ul>
         ) : items.length === 0 ? (
           <p className="px-4 py-6 text-sm text-muted-foreground">{t('notifications.empty')}</p>
         ) : (
@@ -121,9 +139,11 @@ export function NotificationsPopover({ open, onClose, anchorRef }: Props) {
         <div ref={sentinelRef} className="h-4" />
 
         {isFetchingNextPage ? (
-          <p className="px-4 py-3 text-center text-xs text-muted-foreground">
-            {t('notifications.loading')}
-          </p>
+          <ul aria-label={t('notifications.loading')} aria-busy="true">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <NotificationItemSkeleton key={i} />
+            ))}
+          </ul>
         ) : null}
       </div>
     </div>
