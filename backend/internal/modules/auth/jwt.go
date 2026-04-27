@@ -12,41 +12,33 @@ import (
 	"backend/internal/config"
 )
 
-// TokenKind distinguishes access tokens from refresh tokens.
 type TokenKind string
 
 const (
-	// AccessKind is short-lived and embedded in the Authorization header.
-	AccessKind TokenKind = "access"
-	// RefreshKind is longer-lived and is exchanged for a new access token.
+	AccessKind  TokenKind = "access"
 	RefreshKind TokenKind = "refresh"
 )
 
-// Claims is our custom JWT claim payload.
 type Claims struct {
 	UserID uuid.UUID `json:"uid"`
 	Kind   TokenKind `json:"knd"`
 	jwt.RegisteredClaims
 }
 
-// TokenPair groups a fresh access/refresh tuple.
 type TokenPair struct {
 	AccessToken  string    `json:"accessToken"`
 	RefreshToken string    `json:"refreshToken"`
 	ExpiresAt    time.Time `json:"expiresAt"`
 }
 
-// TokenIssuer signs and verifies JWTs using HMAC.
 type TokenIssuer struct {
 	cfg config.JWTConfig
 }
 
-// NewTokenIssuer constructs a TokenIssuer.
 func NewTokenIssuer(cfg config.JWTConfig) *TokenIssuer {
 	return &TokenIssuer{cfg: cfg}
 }
 
-// Issue mints a fresh pair for the supplied user id.
 func (t *TokenIssuer) Issue(userID uuid.UUID) (TokenPair, error) {
 	now := time.Now()
 	access, accessExp, err := t.sign(userID, AccessKind, now, t.cfg.AccessTTL, t.cfg.AccessSecret)
@@ -64,12 +56,10 @@ func (t *TokenIssuer) Issue(userID uuid.UUID) (TokenPair, error) {
 	}, nil
 }
 
-// VerifyAccess validates an access token and returns its claims.
 func (t *TokenIssuer) VerifyAccess(token string) (*Claims, error) {
 	return t.verify(token, AccessKind, t.cfg.AccessSecret)
 }
 
-// VerifyRefresh validates a refresh token and returns its claims.
 func (t *TokenIssuer) VerifyRefresh(token string) (*Claims, error) {
 	return t.verify(token, RefreshKind, t.cfg.RefreshSecret)
 }

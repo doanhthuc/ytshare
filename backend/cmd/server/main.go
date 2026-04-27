@@ -1,4 +1,3 @@
-// Binary server is the HTTP entry point for the YouTube share service.
 package main
 
 import (
@@ -37,9 +36,7 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// The server NEVER applies schema migrations. Migrations are an
-	// explicit operator step — `make migrate`, the one-shot `migrate`
-	// service in docker-compose, or your CI/CD pipeline.
+	// Server never applies migrations; migrations are an explicit operator step.
 	db, err := database.NewPostgres(ctx, cfg.DB)
 	if err != nil {
 		return err

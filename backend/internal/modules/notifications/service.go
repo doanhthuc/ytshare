@@ -10,34 +10,24 @@ import (
 	"backend/internal/modules/users"
 )
 
-// VideoCounter is the slice of the videos repository the notifications
-// service needs. Defined here so this package does not import the videos
-// package and create an import cycle (videos already depends on the
-// notifications hub).
+// VideoCounter is declared here to avoid an import cycle with the videos package.
 type VideoCounter interface {
 	CountSharedAfter(ctx context.Context, after *time.Time, excludeUserID uuid.UUID) (int64, error)
 }
 
-// MaxUnread caps the value the API returns so the client can render a "9+"
-// style badge without paying for a precise large count on the database.
+// MaxUnread caps the API value so the client renders "9+" without a precise large count.
 const MaxUnread = 99
 
-// Service exposes per-user notification read-state operations. It piggybacks
-// on the videos table — every share is, by definition, a notification — and
-// stores the per-user "last seen" marker on the users row (Option A).
 type Service struct {
 	users  users.Repository
 	videos VideoCounter
 }
 
-// NewService wires the notifications Service.
 func NewService(usersRepo users.Repository, videosRepo VideoCounter) *Service {
 	return &Service{users: usersRepo, videos: videosRepo}
 }
 
-// UnreadCount returns the number of shares created after the user's
-// last-seen marker, excluding their own shares. The result is capped at
-// MaxUnread.
+// UnreadCount counts shares since the user's last-seen marker, excluding their own, capped at MaxUnread.
 func (s *Service) UnreadCount(ctx context.Context, userID uuid.UUID) (int64, error) {
 	u, err := s.users.FindByID(ctx, userID)
 	if err != nil {
@@ -53,8 +43,7 @@ func (s *Service) UnreadCount(ctx context.Context, userID uuid.UUID) (int64, err
 	return n, nil
 }
 
-// MarkSeen sets the user's last-seen marker to NOW(), zeroing the unread
-// count for that account on every device.
+// MarkSeen sets the user's last-seen marker to now, zeroing unread count across devices.
 func (s *Service) MarkSeen(ctx context.Context, userID uuid.UUID) (time.Time, error) {
 	now := time.Now().UTC()
 	if err := s.users.SetLastNotificationsSeenAt(ctx, userID, now); err != nil {

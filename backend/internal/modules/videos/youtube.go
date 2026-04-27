@@ -8,13 +8,11 @@ import (
 	"strings"
 )
 
-// ErrInvalidYouTubeURL is returned when we cannot extract a video id.
 var ErrInvalidYouTubeURL = errors.New("videos: invalid youtube URL")
 
 var idPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{11}$`)
 
-// ExtractYouTubeID parses a YouTube URL (watch?v=, youtu.be/, embed/, shorts/)
-// and returns the canonical 11-character video id.
+// ExtractYouTubeID returns the 11-char video id from watch?v=, youtu.be/, embed/, or shorts/.
 func ExtractYouTubeID(raw string) (string, error) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
@@ -37,7 +35,6 @@ func ExtractYouTubeID(raw string) (string, error) {
 		if v := u.Query().Get("v"); idPattern.MatchString(v) {
 			return v, nil
 		}
-		// /embed/<id>, /shorts/<id>, /v/<id>
 		parts := strings.Split(strings.Trim(u.Path, "/"), "/")
 		if len(parts) >= 2 {
 			id := parts[len(parts)-1]
@@ -49,12 +46,10 @@ func ExtractYouTubeID(raw string) (string, error) {
 	return "", ErrInvalidYouTubeURL
 }
 
-// ThumbnailURL returns the standard YouTube thumbnail URL for a video id.
 func ThumbnailURL(youtubeID string) string {
 	return fmt.Sprintf("https://img.youtube.com/vi/%s/hqdefault.jpg", youtubeID)
 }
 
-// WatchURL returns the canonical watch URL for a video id.
 func WatchURL(youtubeID string) string {
 	return fmt.Sprintf("https://www.youtube.com/watch?v=%s", youtubeID)
 }

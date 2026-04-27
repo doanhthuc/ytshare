@@ -4,8 +4,7 @@ import { useAuthStore } from '@/modules/auth/stores';
 
 import { getUnreadCount, markNotificationsSeen } from '../services';
 
-// Exported so other hooks (e.g. useNotificationsSocket) can poke the
-// cached value directly for optimistic UI updates.
+// Exported for direct cache writes in optimistic UI updates.
 export const UNREAD_QUERY_KEY = ['notifications', 'unread-count'] as const;
 export const UNREAD_MAX = 99;
 

@@ -1,7 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 
-// jsdom doesn't implement matchMedia — stub it for any component that
-// inspects user preferences.
+// jsdom doesn't implement matchMedia.
 if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
@@ -18,7 +17,6 @@ if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
   });
 }
 
-// Silence React Router devtools warning in tests.
 if (typeof window !== 'undefined') {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).__TANSTACK_ROUTER_DEVTOOLS__ = false;

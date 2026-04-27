@@ -12,8 +12,6 @@ import { withProviders } from '@/test/test-utils';
 
 import { SignInForm } from './SignInForm';
 
-// We render the form inside a tiny in-memory router so the <Link to="/signup">
-// inside the component resolves correctly.
 function renderForm(onSubmit: (v: { email: string; password: string }) => void) {
   const rootRoute = createRootRoute({ component: () => <SignInForm onSubmit={onSubmit} /> });
   const router = createRouter({
@@ -28,9 +26,6 @@ describe('<SignInForm />', () => {
     const onSubmit = vi.fn();
     renderForm(onSubmit);
 
-    // Wait for the router's initial transition to mount the form.
-    // findBy* polls until the element appears, unlike getBy* which
-    // throws on the first synchronous miss.
     const submitButton = await screen.findByRole('button', { name: /sign in/i });
     await userEvent.click(submitButton);
 

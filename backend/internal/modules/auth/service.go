@@ -11,24 +11,21 @@ import (
 	"backend/internal/modules/users"
 )
 
-// Domain-level error sentinels. Handlers map these to HTTP statuses.
+// Domain error sentinels mapped to HTTP statuses by handlers.
 var (
 	ErrEmailTaken         = errors.New("auth: email already registered")
 	ErrInvalidCredentials = errors.New("auth: invalid credentials")
 )
 
-// Service holds the registration / sign-in business logic.
 type Service struct {
 	users  users.Repository
 	tokens *TokenIssuer
 }
 
-// NewService wires the auth Service.
 func NewService(repo users.Repository, tokens *TokenIssuer) *Service {
 	return &Service{users: repo, tokens: tokens}
 }
 
-// SignUp creates a new user and returns an authenticated session.
 func (s *Service) SignUp(ctx context.Context, req SignUpRequest) (Response, error) {
 	email := normalizeEmail(req.Email)
 
@@ -54,7 +51,6 @@ func (s *Service) SignUp(ctx context.Context, req SignUpRequest) (Response, erro
 	return s.session(user)
 }
 
-// SignIn verifies credentials and returns an authenticated session.
 func (s *Service) SignIn(ctx context.Context, req SignInRequest) (Response, error) {
 	email := normalizeEmail(req.Email)
 
@@ -72,7 +68,6 @@ func (s *Service) SignIn(ctx context.Context, req SignInRequest) (Response, erro
 	return s.session(user)
 }
 
-// Refresh exchanges a valid refresh token for a fresh pair.
 func (s *Service) Refresh(ctx context.Context, req RefreshRequest) (Response, error) {
 	claims, err := s.tokens.VerifyRefresh(req.RefreshToken)
 	if err != nil {

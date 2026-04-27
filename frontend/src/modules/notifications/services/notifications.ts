@@ -17,9 +17,7 @@ export async function markNotificationsSeen(): Promise<MarkSeenResponse> {
   return data;
 }
 
-// getNotificationsSince fetches every event with an ID strictly newer
-// than `sinceId`. Used as a fallback recovery path when the WebSocket
-// `?since=` replay is unavailable (older clients, transient errors).
+// Fallback recovery when WebSocket `?since=` replay is unavailable.
 export async function getNotificationsSince(
   sinceId: string,
   limit = 100

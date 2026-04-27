@@ -16,17 +16,10 @@ const LAST_EVENT_ID_KEY = 'notifications.lastEventId';
 const SEEN_EVENT_CAP = 256;
 
 /**
- * useNotificationsSocket subscribes to the backend WebSocket and pops a
- * toast for every relevant event it receives.
- *
- * Reliability guarantees layered on top of the raw socket:
- * - Persists the last-processed event ID in localStorage.
- * - Reconnects with `?since=<id>` so the backend replays missed events
- *   inline as the first WebSocket frames after upgrade.
- * - HTTP fallback to GET /notifications/since when the WebSocket itself
- *   fails to open (e.g. transient proxy error during reconnect).
- * - Client-side dedup by event ID covers the small overlap window
- *   between the replay backlog and live broadcasts.
+ * Reliability layered over the raw socket:
+ * - Persists last-processed event ID; reconnects with `?since=<id>` for inline replay.
+ * - HTTP fallback to GET /notifications/since when the socket fails to open.
+ * - Client-side dedup by event ID covers replay/live overlap.
  */
 export function useNotificationsSocket() {
   const session = useAuthStore((s) => s.session);
@@ -34,8 +27,6 @@ export function useNotificationsSocket() {
 
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<number | undefined>(undefined);
-  // Recently processed event IDs. Bounded by SEEN_EVENT_CAP so it
-  // cannot grow without bound across a long session.
   const seenIdsRef = useRef<Set<string>>(new Set());
   const seenOrderRef = useRef<string[]>([]);
   const lastEventIdRef = useRef<string>(
@@ -64,8 +55,7 @@ export function useNotificationsSocket() {
       try {
         window.localStorage.setItem(LAST_EVENT_ID_KEY, data.id);
       } catch {
-        // Storage may be disabled (private mode, quota); the socket
-        // still works — we just lose cross-reload replay.
+        // Storage disabled (private mode/quota): lose cross-reload replay only.
       }
 
       if (data.type !== 'video_shared') {
@@ -81,13 +71,7 @@ export function useNotificationsSocket() {
         duration: 6_000,
       });
 
-      // Optimistically bump the bell badge so it updates instantly,
-      // without waiting for the backend roundtrip that
-      // invalidateQueries would trigger. The invalidations below
-      // reconcile with the authoritative server count in the
-      // background — safer than relying solely on optimistic state in
-      // case the user has the bell popover open or marks-as-seen races
-      // with this event.
+      // Optimistic bump; invalidations below reconcile with server count.
       queryClient.setQueryData<{ count: number }>(UNREAD_QUERY_KEY, (prev) => ({
         count: Math.min((prev?.count ?? 0) + 1, UNREAD_MAX),
       }));
@@ -125,8 +109,6 @@ export function useNotificationsSocket() {
       const url = buildUrl();
       if (!url) return;
 
-      // Log the URL with the access token redacted so the user can
-      // verify host / path / since param without leaking credentials.
       const debugUrl = url.replace(/access_token=[^&]+/, 'access_token=***');
       console.info('[notifications] ws connecting', debugUrl);
 
@@ -161,9 +143,7 @@ export function useNotificationsSocket() {
           'reason=' + (event.reason || '(empty)'),
           'wasOpened=' + opened
         );
-        // If the socket never opened, the inline `?since=` replay also
-        // never ran — recover the missed window over HTTP before the
-        // next attempt.
+        // Socket never opened: inline `?since=` replay didn't run, recover via HTTP.
         if (!opened) void recoverViaHttp();
         reconnectTimerRef.current = window.setTimeout(connect, RECONNECT_DELAY_MS);
       };

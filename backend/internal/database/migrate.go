@@ -9,44 +9,30 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"       // register file source
 )
 
-// MigrateAction enumerates the supported migration operations.
 type MigrateAction string
 
 const (
-	// MigrateUp applies all pending migrations.
-	MigrateUp MigrateAction = "up"
-	// MigrateDown rolls back the most recent migration.
+	MigrateUp   MigrateAction = "up"
 	MigrateDown MigrateAction = "down"
 )
 
-// MigrationResult reports the schema version after the operation. `Dirty`
-// means a migration failed mid-way and the operator must intervene with
-// `make migrate-force version=<n>` after fixing the broken file.
+// MigrationResult reports the schema version after the operation. Dirty
+// means a migration failed mid-way and requires `migrate force <n>` after fixing.
 type MigrationResult struct {
 	Version uint
 	Dirty   bool
 	NoOp    bool
 }
 
-// RunMigrations applies the requested action against the database at
-// `databaseURL` (postgres URL form), reading versioned files from `dir`.
-//
-// `databaseURL` must be the URL form, e.g.
-//
-//	postgres://user:password@host:5432/dbname?sslmode=disable
-//
-// `dir` is a filesystem path; passing `./migrations` works.
+// RunMigrations applies action against databaseURL (postgres URL form),
+// reading versioned files from dir.
 func RunMigrations(databaseURL, dir string, action MigrateAction) (MigrationResult, error) {
 	source := "file://" + dir
 	m, err := migrate.New(source, databaseURL)
 	if err != nil {
 		return MigrationResult{}, fmt.Errorf("database: open migrator: %w", err)
 	}
-	defer func() {
-		// Close returns two errors — one each from the source and database
-		// — neither of which we can act on after the work is done.
-		_, _ = m.Close()
-	}()
+	defer func() { _, _ = m.Close() }()
 
 	switch action {
 	case MigrateUp:
@@ -69,8 +55,7 @@ func RunMigrations(databaseURL, dir string, action MigrateAction) (MigrationResu
 	return MigrationResult{Version: version, Dirty: dirty, NoOp: noOp}, nil
 }
 
-// ForceMigrationVersion marks the database at the supplied version, dirty
-// flag cleared. Use after manually resolving a failed migration.
+// ForceMigrationVersion marks the database at version with dirty flag cleared.
 func ForceMigrationVersion(databaseURL, dir string, version int) error {
 	m, err := migrate.New("file://"+dir, databaseURL)
 	if err != nil {

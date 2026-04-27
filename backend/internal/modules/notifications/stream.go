@@ -12,34 +12,16 @@ import (
 	"go.uber.org/zap"
 )
 
-// DefaultStreamKey is the Redis stream every replica reads from. Every
-// event the system fans out is appended here.
 const DefaultStreamKey = "notifications:events"
 
-// streamMaxLen caps the stream length. Old entries are discarded with
-// approximate trimming (`MAXLEN ~`) so an idle stream doesn't grow
-// unbounded. Tune via WithMaxLen if you need a larger replay window.
+// streamMaxLen approximate trim ceiling; tune via WithMaxLen for a larger replay window.
 const streamMaxLen = 10_000
 
-// streamReadBlock is how long XREAD waits for new entries before
-// returning empty. Short enough that shutdown is responsive, long
-// enough to avoid hot-looping against Redis.
 const streamReadBlock = 5 * time.Second
 
-// replayMaxLimit caps the /since response so a misbehaving client cannot
-// XRANGE the entire stream into one HTTP body.
 const replayMaxLimit = 500
 
-// StreamPublisher publishes events to a Redis stream so that every
-// replica subscribed to the same stream sees them.
-//
-// Redis Streams give us:
-//   - durability across replica restarts (subject to retention),
-//   - ordered delivery,
-//   - replay-from-id for clients that reconnect after a network blip.
-//
-// At-least-once semantics: callers should treat duplicate IDs as a
-// possibility (the Subscriber + clients are responsible for dedup).
+// StreamPublisher provides at-least-once delivery via Redis Streams; callers must dedupe.
 type StreamPublisher struct {
 	client *redis.Client
 	key    string
@@ -47,7 +29,6 @@ type StreamPublisher struct {
 	log    *zap.Logger
 }
 
-// StreamOption configures a StreamPublisher or Subscriber.
 type StreamOption func(*streamConfig)
 
 type streamConfig struct {
@@ -55,12 +36,10 @@ type streamConfig struct {
 	maxLen int64
 }
 
-// WithStreamKey overrides the default stream key.
 func WithStreamKey(k string) StreamOption {
 	return func(c *streamConfig) { c.key = k }
 }
 
-// WithMaxLen overrides the approximate max length for trimming.
 func WithMaxLen(n int64) StreamOption {
 	return func(c *streamConfig) { c.maxLen = n }
 }
@@ -73,7 +52,6 @@ func resolveConfig(opts []StreamOption) streamConfig {
 	return c
 }
 
-// NewStreamPublisher constructs a publisher that XADDs to a Redis stream.
 func NewStreamPublisher(client *redis.Client, log *zap.Logger, opts ...StreamOption) *StreamPublisher {
 	cfg := resolveConfig(opts)
 	return &StreamPublisher{
@@ -84,11 +62,8 @@ func NewStreamPublisher(client *redis.Client, log *zap.Logger, opts ...StreamOpt
 	}
 }
 
-// Publish marshals evt and appends it to the stream.
-//
-// The event payload is stored under a single "data" field rather than
-// flattened so that adding fields to Event doesn't require coordinating
-// schema changes across replicas mid-rollout.
+// Publish appends evt to the stream. Stored under a single "data" field so adding
+// fields to Event doesn't require coordinated schema changes mid-rollout.
 func (p *StreamPublisher) Publish(ctx context.Context, evt Event) error {
 	if evt.ID == uuid.Nil {
 		evt.ID = uuid.New()
@@ -117,14 +92,8 @@ func (p *StreamPublisher) Publish(ctx context.Context, evt Event) error {
 	return nil
 }
 
-// Replay returns events with stream IDs strictly after sinceID, in
-// chronological order. Used by the /notifications/since endpoint so a
-// reconnecting client can recover events delivered while it was offline.
-//
-// sinceID accepts any Redis stream ID ("0" for "everything", a real
-// "<ms>-<seq>" ID, or "" which is treated as "0"). The exclusive
-// semantics ("(<id>") match how clients store the last processed ID
-// without needing to pre-increment it.
+// Replay returns events strictly after sinceID. "" or "0" means everything.
+// Exclusive semantics ("(<id>") match how clients store the last-processed ID.
 func (p *StreamPublisher) Replay(ctx context.Context, sinceID string, limit int) ([]Event, error) {
 	if limit <= 0 || limit > replayMaxLimit {
 		limit = replayMaxLimit
@@ -153,12 +122,8 @@ func (p *StreamPublisher) Replay(ctx context.Context, sinceID string, limit int)
 	return out, nil
 }
 
-// Subscriber reads events from the Redis stream and delivers them to
-// the local Hub. Run one per replica.
-//
-// Each replica reads independently from its own cursor, so every
-// replica sees every event (broadcast fan-out, not work-queue
-// semantics — we deliberately do NOT use consumer groups).
+// Subscriber pumps stream entries into the local Hub. One per replica.
+// Reads independently (no consumer groups) so every replica sees every event.
 type Subscriber struct {
 	client *redis.Client
 	hub    *Hub
@@ -166,7 +131,6 @@ type Subscriber struct {
 	log    *zap.Logger
 }
 
-// NewSubscriber wires a subscriber that pumps stream entries into hub.
 func NewSubscriber(client *redis.Client, hub *Hub, log *zap.Logger, opts ...StreamOption) *Subscriber {
 	cfg := resolveConfig(opts)
 	return &Subscriber{
@@ -177,11 +141,8 @@ func NewSubscriber(client *redis.Client, hub *Hub, log *zap.Logger, opts ...Stre
 	}
 }
 
-// Run blocks until ctx is cancelled, pumping stream entries into the
-// hub. On startup it begins from "$" (only events newer than the
-// replica's start), which is the right behaviour for fan-out: clients
-// connected to this replica reconnect elsewhere during downtime, so
-// replaying older events would just toast users twice.
+// Run pumps stream entries into hub until ctx is cancelled. Starts from "$"
+// (only new events) so reconnected clients aren't double-toasted from older entries.
 func (s *Subscriber) Run(ctx context.Context) error {
 	lastID := "$"
 	for {
@@ -198,7 +159,7 @@ func (s *Subscriber) Run(ctx context.Context) error {
 			return nil //nolint:nilerr // ctx cancellation is a clean shutdown signal
 		default:
 			s.log.Warn("notifications_xread", zap.Error(err))
-			// Back off briefly so a Redis outage does not hot-loop.
+			// Back off so a Redis outage doesn't hot-loop.
 			select {
 			case <-ctx.Done():
 				return nil //nolint:nilerr // ctx cancellation is a clean shutdown signal

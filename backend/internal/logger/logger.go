@@ -1,4 +1,3 @@
-// Package logger configures the application's zap logger.
 package logger
 
 import (
@@ -8,7 +7,6 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// New returns a JSON zap logger at the supplied level.
 func New(level string) *zap.Logger {
 	var lvl zapcore.Level
 	switch strings.ToLower(level) {
@@ -33,7 +31,6 @@ func New(level string) *zap.Logger {
 
 	log, err := cfg.Build()
 	if err != nil {
-		// Fall back to a no-op logger rather than panicking on startup.
 		return zap.NewNop()
 	}
 	return log

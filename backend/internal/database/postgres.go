@@ -1,4 +1,3 @@
-// Package database wires the persistence layer.
 package database
 
 import (
@@ -13,9 +12,6 @@ import (
 	"backend/internal/config"
 )
 
-// NewPostgres opens a Postgres connection pool managed by GORM and verifies
-// the connection with a short-deadline ping. Returning an error here lets
-// the caller fail fast on startup if the database is misconfigured.
 func NewPostgres(ctx context.Context, cfg config.DatabaseConfig) (*gorm.DB, error) {
 	db, err := gorm.Open(postgres.Open(cfg.DSN()), &gorm.Config{
 		Logger:                                   logger.Default.LogMode(logger.Warn),

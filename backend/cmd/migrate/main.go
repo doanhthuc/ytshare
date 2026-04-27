@@ -94,10 +94,6 @@ func printResult(r database.MigrationResult) {
 	fmt.Printf("version=%d dirty=%t no_op=%t\n", r.Version, r.Dirty, r.NoOp)
 }
 
-// scaffold creates an empty *.up.sql / *.down.sql pair using a 6-digit
-// timestamp-style sequence so collisions on multi-developer branches are
-// unlikely. We deliberately keep this minimal — no boilerplate inside the
-// new files; every migration is custom.
 func scaffold(dir, name string) error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
@@ -105,7 +101,6 @@ func scaffold(dir, name string) error {
 	seq := time.Now().UTC().Format("20060102150405")
 	for _, suffix := range []string{"up.sql", "down.sql"} {
 		path := filepath.Join(dir, fmt.Sprintf("%s_%s.%s", seq, name, suffix))
-		// O_EXCL so we never silently overwrite an existing file.
 		f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
 		if err != nil {
 			return fmt.Errorf("create %s: %w", path, err)

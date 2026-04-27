@@ -9,12 +9,6 @@ type Props = {
   payload: VideoSharedPayload;
 };
 
-/**
- * NotificationToast renders a rich toast for a "video_shared" event:
- * thumbnail on the left, sharer + title in the middle, a Watch CTA on
- * the right, and a dismiss control. Designed to match the VideoCard
- * styling so it reads as a small preview of the shared video.
- */
 export function NotificationToast({ toastId, payload }: Props) {
   const { t } = useTranslation('videos');
   const initial = payload.sharedByName?.[0]?.toUpperCase() ?? 'U';

@@ -1,6 +1,4 @@
-// Package integration drives the HTTP server end-to-end against an
-// in-memory SQLite database and the in-memory cache. It exercises the
-// sign-up → share → WebSocket-notify happy path that the spec calls out.
+// Package integration drives the HTTP server end-to-end against in-memory SQLite and cache.
 package integration_test
 
 import (
@@ -120,10 +118,7 @@ func TestEndToEnd_SignUpShareNotify(t *testing.T) {
 	}
 	defer conn.Close()
 
-	// Dial returns when the HTTP 101 lands on the client side, but the
-	// server-side hub registration follows the response. Give it a moment
-	// so the broadcast below is not delivered before the subscriber is on
-	// the hub's roster.
+	// Wait for server-side hub registration to complete after the 101 upgrade.
 	time.Sleep(100 * time.Millisecond)
 
 	resp = postJSON(t, ts.URL+"/api/v1/videos", publisher.AccessToken, map[string]string{

@@ -17,7 +17,6 @@ const (
 	sendBufferSize = 32
 )
 
-// Client represents a single WebSocket connection.
 type Client struct {
 	hub    *Hub
 	conn   *websocket.Conn
@@ -26,7 +25,6 @@ type Client struct {
 	log    *zap.Logger
 }
 
-// NewClient builds a Client with a buffered send channel.
 func NewClient(hub *Hub, conn *websocket.Conn, userID uuid.UUID, log *zap.Logger) *Client {
 	return &Client{
 		hub:    hub,
@@ -37,14 +35,12 @@ func NewClient(hub *Hub, conn *websocket.Conn, userID uuid.UUID, log *zap.Logger
 	}
 }
 
-// Run starts the read and write goroutines. The handler registers the
-// client with the hub synchronously before invoking Run.
+// Run starts read/write goroutines; caller must Register with the hub first.
 func (c *Client) Run(ctx context.Context) {
 	go c.writeLoop(ctx)
 	c.readLoop()
 }
 
-// readLoop consumes pings and detects connection close.
 func (c *Client) readLoop() {
 	defer func() {
 		c.hub.Unregister(c)
@@ -69,7 +65,6 @@ func (c *Client) readLoop() {
 	}
 }
 
-// writeLoop forwards events from the hub to the WebSocket connection.
 func (c *Client) writeLoop(ctx context.Context) {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {

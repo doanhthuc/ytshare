@@ -10,7 +10,6 @@ import (
 	"backend/internal/config"
 )
 
-// NewRedis opens a Redis client and verifies the connection with a PING.
 func NewRedis(ctx context.Context, cfg config.RedisConfig) (*redis.Client, error) {
 	var client *redis.Client
 	if cfg.URL != "" {

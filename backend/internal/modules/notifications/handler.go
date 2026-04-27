@@ -16,7 +16,6 @@ import (
 	"backend/internal/middleware"
 )
 
-// Handler exposes the WebSocket endpoint.
 type Handler struct {
 	hub      *Hub
 	svc      *Service
@@ -25,8 +24,6 @@ type Handler struct {
 	log      *zap.Logger
 }
 
-// NewHandler constructs the WebSocket handler. replayer is optional —
-// pass nil for transports without a durable log.
 func NewHandler(hub *Hub, svc *Service, replayer Replayer, allowedOrigins []string, log *zap.Logger) *Handler {
 	allowed := make(map[string]struct{}, len(allowedOrigins))
 	for _, o := range allowedOrigins {
@@ -38,7 +35,7 @@ func NewHandler(hub *Hub, svc *Service, replayer Replayer, allowedOrigins []stri
 		CheckOrigin: func(r *http.Request) bool {
 			origin := r.Header.Get("Origin")
 			if origin == "" {
-				return true // same-origin / non-browser clients
+				return true
 			}
 			_, ok := allowed[origin]
 			return ok
@@ -47,8 +44,6 @@ func NewHandler(hub *Hub, svc *Service, replayer Replayer, allowedOrigins []stri
 	return &Handler{hub: hub, svc: svc, replayer: replayer, upgrader: upgrader, log: log}
 }
 
-// RegisterRoutes mounts the WebSocket route. The route is wrapped in
-// the auth middleware so only authenticated users can subscribe.
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/notifications/ws", h.handle)
 	r.Get("/notifications/unread-count", h.unreadCount)
@@ -56,11 +51,8 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/notifications/since", h.since)
 }
 
-// since returns events newer than ?id=<event-id>. The client persists
-// the last event ID it processed and calls this on WebSocket reconnect
-// so a brief network blip does not silently drop a notification.
-//
-// Returns 501 if the publisher transport has no durable log.
+// since returns events newer than ?id=<event-id>. Returns 501 if the
+// publisher transport has no durable log.
 func (h *Handler) since(w http.ResponseWriter, r *http.Request) {
 	if h.replayer == nil {
 		httpx.WriteError(w, httpx.NewError(http.StatusNotImplemented, "replay_unsupported", "event replay is not configured"))
@@ -104,9 +96,7 @@ func (h *Handler) markSeen(w http.ResponseWriter, r *http.Request) {
 	httpx.JSON(w, http.StatusOK, map[string]string{"seenAt": at.Format(time.RFC3339Nano)})
 }
 
-// wsReplayLimit caps how many backlog events we replay on connect.
-// Sized so the burst stays under the client's send buffer headroom and
-// the upgrade handshake doesn't stall on a huge backlog.
+// wsReplayLimit caps backlog replay on connect to fit the send buffer.
 const wsReplayLimit = 100
 
 func (h *Handler) handle(w http.ResponseWriter, r *http.Request) {
@@ -119,32 +109,22 @@ func (h *Handler) handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	client := NewClient(h.hub, conn, userID, h.log)
-	// Register synchronously before returning so a publisher racing the
-	// upgrade cannot broadcast into a hub that does not yet know about
-	// this client.
+	// Register synchronously so racing publishers don't broadcast before the hub knows the client.
 	h.hub.Register(client)
 
-	// If the client supplied ?since=<event-id>, push any backlog events
-	// directly to the connection before writeLoop starts. writeLoop is
-	// not running yet, so these synchronous writes don't race the live
-	// pump. Live events that arrive while we're replaying are buffered
-	// in client.send and pumped immediately after Run starts — clients
-	// dedupe by event.id to handle the small overlap window.
+	// Replay backlog directly before writeLoop starts — synchronous writes don't race the live pump.
+	// Live events arriving during replay buffer in client.send; clients dedupe by event.id.
 	if since != "" && h.replayer != nil {
 		h.replayBacklog(r.Context(), conn, userID, since)
 	}
 
-	// Detach from r.Context(): the request context is cancelled the moment
-	// this handler returns, which would tear down the upgraded connection
-	// immediately. The client lifecycle is bounded instead by the read
-	// loop (peer disconnect / read deadline) and by conn.Close().
+	// Detach from r.Context(): cancelled when handler returns, which would tear down the upgrade.
+	// Lifecycle is bounded by readLoop (peer disconnect / read deadline) and conn.Close().
 	go client.Run(context.Background())
 }
 
-// replayBacklog writes events newer than sinceID directly to conn. It
-// runs before writeLoop, so it is the only writer on the connection.
-// On error we just log and continue — the client will reconcile via
-// its own dedup once live events arrive.
+// replayBacklog runs before writeLoop, so it is the only writer on conn.
+// Errors are logged; the client reconciles via its own dedup.
 func (h *Handler) replayBacklog(ctx context.Context, conn *websocket.Conn, userID uuid.UUID, sinceID string) {
 	events, err := h.replayer.Replay(ctx, sinceID, wsReplayLimit)
 	if err != nil {
@@ -152,8 +132,7 @@ func (h *Handler) replayBacklog(ctx context.Context, conn *websocket.Conn, userI
 		return
 	}
 	for _, evt := range events {
-		// Drop events targeted at a different user. (Broadcast events
-		// have RecipientID == zero, so they pass through.)
+		// Drop user-targeted events for other users; broadcasts (zero RecipientID) pass through.
 		if evt.RecipientID != uuid.Nil && evt.RecipientID != userID {
 			continue
 		}

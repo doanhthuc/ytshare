@@ -14,7 +14,6 @@ import (
 	"backend/internal/modules/users"
 )
 
-// memRepo is a test double for users.Repository.
 type memRepo struct {
 	byEmail map[string]*users.User
 	byID    map[uuid.UUID]*users.User
@@ -82,7 +81,6 @@ func TestService_SignUp(t *testing.T) {
 	assert.NotEmpty(t, resp.AccessToken)
 	assert.NotEmpty(t, resp.RefreshToken)
 
-	// duplicate email should fail
 	_, err = svc.SignUp(context.Background(), auth.SignUpRequest{
 		Email:    "alice@example.com",
 		Name:     "Alice 2",
@@ -90,7 +88,6 @@ func TestService_SignUp(t *testing.T) {
 	})
 	assert.True(t, errors.Is(err, auth.ErrEmailTaken))
 
-	// stored user should have hashed password
 	u, ok := repo.byEmail["alice@example.com"]
 	require.True(t, ok)
 	assert.NotEqual(t, "password123", u.PasswordHash)
@@ -108,7 +105,7 @@ func TestService_SignIn(t *testing.T) {
 	require.NoError(t, err)
 
 	resp, err := svc.SignIn(context.Background(), auth.SignInRequest{
-		Email:    "BOB@example.com", // case-insensitive
+		Email:    "BOB@example.com",
 		Password: "password123",
 	})
 	require.NoError(t, err)

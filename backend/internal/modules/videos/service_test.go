@@ -20,7 +20,6 @@ import (
 	"backend/internal/modules/videos"
 )
 
-// fakeUserRepo lets us return a fixed user for FindByID.
 type fakeUserRepo struct {
 	user *users.User
 }
@@ -45,7 +44,6 @@ func (f *fakeUserRepo) SetLastNotificationsSeenAt(_ context.Context, id uuid.UUI
 	return nil
 }
 
-// fakeVideoRepo records inserted videos and reports duplicates.
 type fakeVideoRepo struct {
 	mu     sync.Mutex
 	stored []videos.Video
@@ -184,7 +182,7 @@ func TestService_List_UsesCache(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, first.Items, 1)
 
-	// Mutate repo directly; the cache should still serve the stale list.
+	// Cache should serve the stale list after the underlying repo is wiped.
 	repo.mu.Lock()
 	repo.stored = nil
 	repo.mu.Unlock()

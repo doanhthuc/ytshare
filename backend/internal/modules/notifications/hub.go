@@ -10,24 +10,12 @@ import (
 	"go.uber.org/zap"
 )
 
-// broadcastBuffer caps the number of in-flight events the publisher may
-// queue before the hub has a chance to fan them out. Sized so a brief
-// burst of shares does not block request handlers, but a sustained
-// backlog surfaces as a dropped-broadcast warning rather than silently
-// growing memory.
+// broadcastBuffer caps in-flight events; sustained overflow surfaces as a dropped-broadcast warning.
 const broadcastBuffer = 256
 
-// Hub fans out events to every connected client.
-//
-// All mutations of the clients set happen inside a single owner
-// goroutine (run). Register, Unregister, Broadcast and SendToUser post
-// messages to that goroutine over channels, so there is no shared
-// mutable state, no mutex, and no possibility of sending to a closed
-// channel.
-//
-// The owner indexes clients by userID so that SendToUser is O(k) in the
-// number of connections that user has open (multi-tab, multi-device),
-// not O(N) in the total fleet.
+// Hub fans out events. All client-set mutations happen in the owner goroutine (run);
+// callers post messages over channels — no mutex, no send-on-closed-channel.
+// Indexed by userID so SendToUser is O(k) in that user's connections, not O(N).
 type Hub struct {
 	register   chan registerReq
 	unregister chan *Client
@@ -44,14 +32,12 @@ type registerReq struct {
 	ack    chan struct{}
 }
 
-// dispatchMsg is what the owner goroutine receives. recipient == zero
-// means broadcast; otherwise route only to that user's connections.
+// recipient == uuid.Nil means broadcast; otherwise route only to that user.
 type dispatchMsg struct {
 	recipient uuid.UUID
 	payload   []byte
 }
 
-// NewHub constructs a Hub and starts its owner goroutine.
 func NewHub(log *zap.Logger) *Hub {
 	h := &Hub{
 		register:   make(chan registerReq),
@@ -65,17 +51,13 @@ func NewHub(log *zap.Logger) *Hub {
 	return h
 }
 
-// Close stops the hub and closes every client's send channel. It blocks
-// until the owner goroutine has drained. Safe to call multiple times.
+// Close stops the hub and closes every client's send channel. Idempotent; blocks until drained.
 func (h *Hub) Close() {
 	h.closeOnce.Do(func() { close(h.stop) })
 	<-h.done
 }
 
-// Register adds a client and blocks until the owner has acknowledged it.
-// The synchronous handshake means a publisher racing the WebSocket
-// upgrade cannot broadcast into a hub that does not yet know about this
-// client.
+// Register blocks until the owner acks, so racing publishers can't broadcast before registration.
 func (h *Hub) Register(c *Client) {
 	ack := make(chan struct{})
 	select {
@@ -86,8 +68,7 @@ func (h *Hub) Register(c *Client) {
 	}
 }
 
-// Unregister asks the hub to drop a client. It is idempotent and never
-// blocks the caller; the owner deduplicates concurrent requests.
+// Unregister is idempotent and non-blocking; the owner dedupes concurrent requests.
 func (h *Hub) Unregister(c *Client) {
 	select {
 	case h.unregister <- c:
@@ -95,26 +76,19 @@ func (h *Hub) Unregister(c *Client) {
 	}
 }
 
-// Count returns the current number of connected clients.
 func (h *Hub) Count() int {
 	return int(h.count.Load())
 }
 
-// Broadcast publishes evt to every connected client. The publisher
-// never blocks: if the hub's queue is full the event is dropped.
+// Broadcast is non-blocking; events are dropped when the dispatch queue is full.
 func (h *Hub) Broadcast(evt Event) {
 	h.publish(evt, uuid.Nil)
 }
 
-// SendToUser publishes evt only to the connections owned by userID.
-// Used for personalized notifications. If the user has no live
-// connections on this replica the call is a silent no-op (the event is
-// not buffered for later — that is the responsibility of the durable
-// stream + the /notifications/since endpoint).
+// SendToUser routes only to userID's connections on this replica; no buffering for offline users.
 func (h *Hub) SendToUser(userID uuid.UUID, evt Event) {
 	if userID == uuid.Nil {
-		// Treat as broadcast rather than silently dropping; nil
-		// recipient is almost certainly a bug at the call site.
+		// Almost certainly a caller bug; warn and broadcast rather than silently drop.
 		h.log.Warn("ws_send_to_user_nil_id")
 		h.Broadcast(evt)
 		return
@@ -141,9 +115,7 @@ func (h *Hub) publish(evt Event, recipient uuid.UUID) {
 	}
 }
 
-// clientRegistry is the run-loop's private view of connected clients.
-// All of its methods are intended to be called from a single goroutine;
-// it owns the underlying maps and is not safe for concurrent use.
+// clientRegistry: not safe for concurrent use; called only from the run goroutine.
 type clientRegistry struct {
 	byUser map[uuid.UUID]map[*Client]struct{}
 	total  int
@@ -230,8 +202,7 @@ func (r *clientRegistry) closeAll() {
 	r.count.Store(0)
 }
 
-// run owns the clients map. It is the only goroutine that reads or
-// writes the map or closes any client's send channel.
+// run is the sole reader/writer of the clients map and closer of send channels.
 func (h *Hub) run() {
 	reg := newClientRegistry(&h.count, h.log)
 	defer close(h.done)

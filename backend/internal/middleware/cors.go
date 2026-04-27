@@ -1,4 +1,3 @@
-// Package middleware contains net/http middlewares shared across the service.
 package middleware
 
 import (
@@ -7,7 +6,6 @@ import (
 	"github.com/go-chi/cors"
 )
 
-// CORS returns a CORS middleware configured for the supplied origins.
 func CORS(allowedOrigins []string) func(http.Handler) http.Handler {
 	return cors.Handler(cors.Options{
 		AllowedOrigins:   allowedOrigins,

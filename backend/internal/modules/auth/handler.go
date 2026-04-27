@@ -10,18 +10,15 @@ import (
 	"backend/internal/httpx"
 )
 
-// Handler exposes the auth endpoints.
 type Handler struct {
 	svc *Service
 	v   *validator.Validate
 }
 
-// NewHandler returns the auth HTTP handler.
 func NewHandler(svc *Service, v *validator.Validate) *Handler {
 	return &Handler{svc: svc, v: v}
 }
 
-// RegisterRoutes mounts the auth routes onto the supplied router.
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Route("/auth", func(r chi.Router) {
 		r.Post("/signup", h.signUp)

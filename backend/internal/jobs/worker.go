@@ -1,8 +1,4 @@
-// Package jobs implements an in-process background worker.
-//
-// For an interview scope this is intentionally simple: a buffered channel
-// drained by a pool of goroutines. The same shape (Submit + worker pool)
-// would translate one-to-one to NATS / Asynq / SQS in production.
+// Package jobs implements an in-process background worker pool.
 package jobs
 
 import (
@@ -13,10 +9,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// Job is a unit of background work.
 type Job func(ctx context.Context) error
 
-// Worker is a job runner with a fixed-size goroutine pool.
 type Worker struct {
 	queue   chan Job
 	wg      sync.WaitGroup
@@ -24,7 +18,6 @@ type Worker struct {
 	timeout time.Duration
 }
 
-// NewWorker creates a Worker with the supplied pool size.
 func NewWorker(poolSize, queueSize int, log *zap.Logger) *Worker {
 	if poolSize <= 0 {
 		poolSize = 4
@@ -44,7 +37,7 @@ func NewWorker(poolSize, queueSize int, log *zap.Logger) *Worker {
 	return w
 }
 
-// Submit enqueues a job. It blocks if the queue is full.
+// Submit enqueues a job; blocks if the queue is full.
 func (w *Worker) Submit(j Job) {
 	w.queue <- j
 }

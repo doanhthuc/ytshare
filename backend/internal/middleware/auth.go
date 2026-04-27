@@ -17,14 +17,12 @@ const (
 	ctxKeyUserID ctxKey = iota
 )
 
-// Authenticator returns middleware that validates the access token in the
-// `Authorization: Bearer ...` header and stuffs the user id into the context.
 func Authenticator(tokens *auth.TokenIssuer) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			raw := r.Header.Get("Authorization")
 			if raw == "" {
-				// allow query-string fallback for the WebSocket upgrade.
+				// Query-string fallback for WebSocket upgrade.
 				raw = r.URL.Query().Get("access_token")
 			}
 			token := stripBearer(raw)
@@ -49,7 +47,7 @@ func Authenticator(tokens *auth.TokenIssuer) func(http.Handler) http.Handler {
 	}
 }
 
-// UserIDFromContext returns the authenticated user id (or uuid.Nil).
+// UserIDFromContext returns the authenticated user id, or uuid.Nil if absent.
 func UserIDFromContext(ctx context.Context) uuid.UUID {
 	if v, ok := ctx.Value(ctxKeyUserID).(uuid.UUID); ok {
 		return v

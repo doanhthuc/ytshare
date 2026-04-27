@@ -9,7 +9,6 @@ import (
 	"backend/internal/modules/users"
 )
 
-// Video is the persistence model for a shared YouTube video.
 type Video struct {
 	ID           uuid.UUID  `gorm:"type:uuid;primaryKey"          json:"id"`
 	YouTubeID    string     `gorm:"column:youtube_id;size:32;index;not null"  json:"youtubeId"`
@@ -23,5 +22,4 @@ type Video struct {
 	UpdatedAt    time.Time  `json:"updatedAt"`
 }
 
-// TableName lets GORM use a stable plural name.
 func (Video) TableName() string { return "videos" }

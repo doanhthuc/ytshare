@@ -12,23 +12,19 @@ import (
 	"backend/internal/middleware"
 )
 
-// Handler exposes the videos endpoints.
 type Handler struct {
 	svc *Service
 	v   *validator.Validate
 }
 
-// NewHandler returns the videos HTTP handler.
 func NewHandler(svc *Service, v *validator.Validate) *Handler {
 	return &Handler{svc: svc, v: v}
 }
 
-// RegisterPublicRoutes mounts the read-only routes (no auth required).
 func (h *Handler) RegisterPublicRoutes(r chi.Router) {
 	r.Get("/videos", h.list)
 }
 
-// RegisterPrivateRoutes mounts the routes that require an access token.
 func (h *Handler) RegisterPrivateRoutes(r chi.Router) {
 	r.Post("/videos", h.share)
 }

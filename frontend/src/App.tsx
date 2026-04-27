@@ -10,8 +10,7 @@ import { ErrorFallback } from '@/shared/components';
 import { bootstrapAuth } from '@/modules/auth/utils';
 import { routeTree } from '@/routeTree.gen';
 
-// Wire the axios interceptor to the auth store before any component
-// has a chance to issue a request.
+// Must run before any component issues a request.
 bootstrapAuth();
 
 const router = createRouter({ routeTree });

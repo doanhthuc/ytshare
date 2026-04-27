@@ -13,7 +13,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Config aggregates all runtime configuration for the service.
 type Config struct {
 	App        AppConfig
 	HTTP       HTTPConfig
@@ -24,18 +23,15 @@ type Config struct {
 	Migrations MigrationsConfig
 }
 
-// AppConfig captures process-level metadata.
 type AppConfig struct {
 	Env      string
 	LogLevel string
 }
 
-// HTTPConfig captures the HTTP server settings.
 type HTTPConfig struct {
 	Port int
 }
 
-// DatabaseConfig captures Postgres connection settings.
 type DatabaseConfig struct {
 	Host     string
 	Port     int
@@ -45,10 +41,8 @@ type DatabaseConfig struct {
 	SSLMode  string
 }
 
-// RedisConfig captures Redis connection settings.
-//
-// When URL is set (e.g. via REDIS_URL on Render/Heroku-style platforms) it
-// takes precedence over the discrete fields and is parsed by go-redis.
+// RedisConfig: when URL is set (e.g. REDIS_URL on Render/Heroku) it takes
+// precedence over the discrete fields and is parsed by go-redis.
 type RedisConfig struct {
 	URL      string
 	Addr     string
@@ -56,7 +50,6 @@ type RedisConfig struct {
 	DB       int
 }
 
-// JWTConfig captures token signing configuration.
 type JWTConfig struct {
 	AccessSecret  string
 	RefreshSecret string
@@ -64,23 +57,16 @@ type JWTConfig struct {
 	RefreshTTL    time.Duration
 }
 
-// CORSConfig captures the comma-separated list of allowed origins.
 type CORSConfig struct {
 	AllowedOrigins []string
 }
 
-// MigrationsConfig captures schema-migration knobs.
-//
-// The server never applies migrations automatically — migrations are always
-// an explicit, operator-driven step (`make migrate` locally, the one-shot
-// `migrate` service in docker-compose, or your CI pipeline in production).
-// Only `cmd/migrate` reads this config.
+// MigrationsConfig is read only by cmd/migrate; the server never auto-migrates.
 type MigrationsConfig struct {
-	// Dir is the filesystem path holding the *.up.sql / *.down.sql files.
 	Dir string
 }
 
-// DSN returns the libpq-style Postgres connection string used by GORM.
+// DSN returns the libpq-style connection string for GORM.
 func (c DatabaseConfig) DSN() string {
 	return fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
@@ -88,8 +74,7 @@ func (c DatabaseConfig) DSN() string {
 	)
 }
 
-// URL returns the URL-style Postgres connection string required by
-// golang-migrate (e.g. `postgres://user:pw@host:5432/db?sslmode=disable`).
+// URL returns the URL-style connection string required by golang-migrate.
 func (c DatabaseConfig) URL() string {
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
@@ -99,12 +84,8 @@ func (c DatabaseConfig) URL() string {
 	)
 }
 
-// Load reads configuration from a .env file (if present) and the process
-// environment. Missing values fall back to sensible local defaults to make
-// "go run" work out of the box.
+// Load reads configuration from .env (if present) and the process environment.
 func Load() (Config, error) {
-	// Best-effort: ignore the error so production deployments without a
-	// .env file still work.
 	_ = godotenv.Load()
 
 	httpPort, err := envInt("HTTP_PORT", 8080)
@@ -167,8 +148,7 @@ func Load() (Config, error) {
 		},
 	}
 
-	// Render/Heroku-style platforms expose a single DATABASE_URL. When
-	// present, parse it and override the discrete DB_* fields.
+	// DATABASE_URL overrides the discrete DB_* fields.
 	if dbURL := envStr("DATABASE_URL", ""); dbURL != "" {
 		if err := applyDatabaseURL(&cfg.DB, dbURL); err != nil {
 			return Config{}, err
@@ -210,9 +190,8 @@ func envInt(key string, fallback int) (int, error) {
 	return n, nil
 }
 
-// applyDatabaseURL parses a libpq URL ("postgres://user:pass@host:port/db?sslmode=require")
-// and writes it into cfg. Missing port defaults to 5432; missing sslmode defaults to require
-// (Render and most managed Postgres providers require SSL on external connections).
+// applyDatabaseURL parses a libpq URL into cfg. Missing port defaults to 5432;
+// missing sslmode defaults to "require" (most managed Postgres providers require SSL).
 func applyDatabaseURL(cfg *DatabaseConfig, raw string) error {
 	u, err := url.Parse(raw)
 	if err != nil {

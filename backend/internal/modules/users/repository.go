@@ -10,10 +10,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// ErrNotFound is returned when no user matches the lookup criteria.
 var ErrNotFound = errors.New("users: not found")
 
-// Repository persists user records.
 type Repository interface {
 	Create(ctx context.Context, u *User) error
 	FindByEmail(ctx context.Context, email string) (*User, error)
@@ -21,17 +19,14 @@ type Repository interface {
 	SetLastNotificationsSeenAt(ctx context.Context, id uuid.UUID, at time.Time) error
 }
 
-// gormRepo is the GORM-backed Repository.
 type gormRepo struct {
 	db *gorm.DB
 }
 
-// NewRepository constructs the default Repository implementation.
 func NewRepository(db *gorm.DB) Repository {
 	return &gormRepo{db: db}
 }
 
-// Create inserts a new user row.
 func (r *gormRepo) Create(ctx context.Context, u *User) error {
 	if u.ID == uuid.Nil {
 		u.ID = uuid.New()
@@ -42,7 +37,7 @@ func (r *gormRepo) Create(ctx context.Context, u *User) error {
 	return nil
 }
 
-// FindByEmail returns the user with the supplied email or ErrNotFound.
+// FindByEmail returns the user with the email or ErrNotFound.
 func (r *gormRepo) FindByEmail(ctx context.Context, email string) (*User, error) {
 	var u User
 	err := r.db.WithContext(ctx).Where("email = ?", email).First(&u).Error
@@ -55,7 +50,6 @@ func (r *gormRepo) FindByEmail(ctx context.Context, email string) (*User, error)
 	return &u, nil
 }
 
-// SetLastNotificationsSeenAt updates the user's notifications "seen" marker.
 func (r *gormRepo) SetLastNotificationsSeenAt(ctx context.Context, id uuid.UUID, at time.Time) error {
 	res := r.db.WithContext(ctx).
 		Model(&User{}).
@@ -70,7 +64,7 @@ func (r *gormRepo) SetLastNotificationsSeenAt(ctx context.Context, id uuid.UUID,
 	return nil
 }
 
-// FindByID returns the user with the supplied id or ErrNotFound.
+// FindByID returns the user with the id or ErrNotFound.
 func (r *gormRepo) FindByID(ctx context.Context, id uuid.UUID) (*User, error) {
 	var u User
 	err := r.db.WithContext(ctx).Where("id = ?", id).First(&u).Error

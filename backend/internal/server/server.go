@@ -1,4 +1,3 @@
-// Package server wires the HTTP router and lifecycle.
 package server
 
 import (
@@ -26,11 +25,8 @@ import (
 	"backend/internal/modules/videos"
 )
 
-// Deps groups every external dependency needed by the HTTP server.
-//
-// Redis is optional: when present, the server uses Redis Streams as
-// the cross-replica notification bus. When nil, the in-process Hub is
-// the only fan-out path (suitable for single-instance dev/tests).
+// Deps holds external dependencies for the HTTP server.
+// Redis is optional: when nil, the in-process Hub is the only fan-out path.
 type Deps struct {
 	Config config.Config
 	Logger *zap.Logger
@@ -40,11 +36,8 @@ type Deps struct {
 	Worker *jobs.Worker
 }
 
-// Build constructs a fully-wired *http.Server ready to be started.
-//
-// ctx bounds the lifetime of any background goroutines spawned here
-// (e.g. the Redis Streams subscriber). Cancelling ctx unwinds them
-// before the HTTP server is shut down by Run.
+// Build wires the HTTP server. ctx bounds background goroutines spawned here
+// (e.g. Redis Streams subscriber); cancel before Run shuts down the server.
 func Build(ctx context.Context, d Deps) *http.Server {
 	v := validator.New(validator.WithRequiredStructEnabled())
 
@@ -55,16 +48,14 @@ func Build(ctx context.Context, d Deps) *http.Server {
 	authHandler := auth.NewHandler(authSvc, v)
 
 	hub := notifications.NewHub(d.Logger)
-	// Tear the Hub down when the server context is cancelled so the
-	// owner goroutine drains and every client's writeLoop exits
-	// cleanly during graceful shutdown.
+	// Tear down on ctx cancel for graceful shutdown of clients' writeLoops.
 	go func() {
 		<-ctx.Done()
 		hub.Close()
 	}()
 
 	publisher := buildPublisher(ctx, hub, d)
-	replayer, _ := publisher.(notifications.Replayer) // nil for LocalPublisher
+	replayer, _ := publisher.(notifications.Replayer)
 
 	videoRepo := videos.NewRepository(d.DB)
 	notifSvc := notifications.NewService(userRepo, videoRepo)
@@ -109,12 +100,8 @@ func Build(ctx context.Context, d Deps) *http.Server {
 	}
 }
 
-// buildPublisher selects the notification transport based on deps.
-//
-// With Redis available we publish to a Redis stream and run a
-// per-replica subscriber that pumps stream entries into the local Hub —
-// every replica sees every event, regardless of which one produced it.
-// Without Redis, the in-process Hub is the only fan-out path.
+// buildPublisher selects between Redis Streams (cross-replica fan-out) and
+// the in-process Hub when Redis is unavailable.
 func buildPublisher(ctx context.Context, hub *notifications.Hub, d Deps) notifications.Publisher {
 	if d.Redis == nil {
 		d.Logger.Info("notifications_publisher", zap.String("transport", "local"))
@@ -130,8 +117,7 @@ func buildPublisher(ctx context.Context, hub *notifications.Hub, d Deps) notific
 	return notifications.NewStreamPublisher(d.Redis, d.Logger)
 }
 
-// Run starts the server and blocks until ctx is cancelled, then performs
-// a graceful shutdown.
+// Run blocks until ctx is cancelled, then performs graceful shutdown.
 func Run(ctx context.Context, srv *http.Server, log *zap.Logger) error {
 	errCh := make(chan error, 1)
 	go func() {

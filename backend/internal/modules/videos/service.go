@@ -17,7 +17,6 @@ import (
 	"backend/internal/modules/users"
 )
 
-// Domain-level error sentinels.
 var (
 	ErrInvalidURL    = errors.New("videos: invalid url")
 	ErrAlreadyShared = errors.New("videos: already shared")
@@ -28,7 +27,6 @@ const (
 	listCacheTTL = 30 * time.Second
 )
 
-// Service contains the video sharing business logic.
 type Service struct {
 	repo      Repository
 	users     users.Repository
@@ -38,7 +36,6 @@ type Service struct {
 	log       *zap.Logger
 }
 
-// NewService wires the videos Service.
 func NewService(
 	repo Repository,
 	usersRepo users.Repository,
@@ -57,8 +54,7 @@ func NewService(
 	}
 }
 
-// Share validates a URL, persists the shared video and broadcasts a
-// notification asynchronously via the background worker.
+// Share persists the shared video and broadcasts asynchronously via the worker.
 func (s *Service) Share(ctx context.Context, sharerID uuid.UUID, req ShareRequest) (VideoView, error) {
 	youtubeID, err := ExtractYouTubeID(req.URL)
 	if err != nil {
@@ -94,9 +90,6 @@ func (s *Service) Share(ctx context.Context, sharerID uuid.UUID, req ShareReques
 		return VideoView{}, err
 	}
 
-	// Invalidate the cached list and dispatch the broadcast off the request
-	// goroutine. The HTTP response returns immediately while the WebSocket
-	// fan-out happens in the background worker.
 	if err := s.cache.Delete(ctx, listCacheKey); err != nil {
 		s.log.Warn("videos_cache_delete", zap.Error(err))
 	}
@@ -123,7 +116,7 @@ func (s *Service) Share(ctx context.Context, sharerID uuid.UUID, req ShareReques
 	return view, nil
 }
 
-// List returns the most recent shared videos. The first page is cached.
+// List returns recent shared videos; the first page is cached.
 func (s *Service) List(ctx context.Context, limit, offset int) (ListResponse, error) {
 	if offset == 0 && limit <= 20 {
 		var cached ListResponse
