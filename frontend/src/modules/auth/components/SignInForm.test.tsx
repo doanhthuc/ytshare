@@ -28,7 +28,11 @@ describe('<SignInForm />', () => {
     const onSubmit = vi.fn();
     renderForm(onSubmit);
 
-    await userEvent.click(screen.getByRole('button', { name: /sign in/i }));
+    // Wait for the router's initial transition to mount the form.
+    // findBy* polls until the element appears, unlike getBy* which
+    // throws on the first synchronous miss.
+    const submitButton = await screen.findByRole('button', { name: /sign in/i });
+    await userEvent.click(submitButton);
 
     await waitFor(() => {
       expect(screen.getByText(/email is required/i)).toBeInTheDocument();
@@ -41,7 +45,8 @@ describe('<SignInForm />', () => {
     const onSubmit = vi.fn();
     renderForm(onSubmit);
 
-    await userEvent.type(screen.getByLabelText(/email/i), 'not-an-email');
+    const emailInput = await screen.findByLabelText(/email/i);
+    await userEvent.type(emailInput, 'not-an-email');
     await userEvent.type(screen.getByLabelText(/password/i), 'password123');
     await userEvent.click(screen.getByRole('button', { name: /sign in/i }));
 
@@ -55,7 +60,8 @@ describe('<SignInForm />', () => {
     const onSubmit = vi.fn();
     renderForm(onSubmit);
 
-    await userEvent.type(screen.getByLabelText(/email/i), 'user@example.com');
+    const emailInput = await screen.findByLabelText(/email/i);
+    await userEvent.type(emailInput, 'user@example.com');
     await userEvent.type(screen.getByLabelText(/password/i), 'password123');
     await userEvent.click(screen.getByRole('button', { name: /sign in/i }));
 

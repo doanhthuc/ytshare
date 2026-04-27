@@ -14,6 +14,12 @@ defaults:
   run:
     working-directory: frontend
 
+# pnpm/action-setup@v4 still ships on Node.js 20, which GitHub deprecated.
+# Force the runner to execute JS actions on Node.js 24 until upstream
+# publishes a release we can pin to.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   build:
     runs-on: ubuntu-latest
