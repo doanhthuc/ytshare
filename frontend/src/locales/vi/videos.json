@@ -30,6 +30,8 @@
     "invalidUrl": "Không nhận diện được liên kết YouTube",
     "alreadyShared": "Video này đã được chia sẻ",
     "genericError": "Không thể chia sẻ video. Vui lòng thử lại.",
-    "newShare": "{{name}} đã chia sẻ: {{title}}"
+    "newShare": "{{name}} đã chia sẻ: {{title}}",
+    "sharedBy": "{{name}} vừa chia sẻ một video",
+    "dismiss": "Bỏ qua"
   }
 }

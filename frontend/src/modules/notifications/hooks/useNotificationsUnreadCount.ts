@@ -4,7 +4,10 @@ import { useAuthStore } from '@/modules/auth/stores';
 
 import { getUnreadCount, markNotificationsSeen } from '../services';
 
-const UNREAD_QUERY_KEY = ['notifications', 'unread-count'] as const;
+// Exported so other hooks (e.g. useNotificationsSocket) can poke the
+// cached value directly for optimistic UI updates.
+export const UNREAD_QUERY_KEY = ['notifications', 'unread-count'] as const;
+export const UNREAD_MAX = 99;
 
 export function useNotificationsUnreadCount() {
   const isAuthed = useAuthStore((s) => Boolean(s.session));

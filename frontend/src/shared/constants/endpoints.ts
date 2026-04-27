@@ -12,4 +12,5 @@ export const API_ENDPOINTS = {
   notificationsWS: '/notifications/ws',
   notificationsUnreadCount: '/notifications/unread-count',
   notificationsMarkSeen: '/notifications/mark-seen',
+  notificationsSince: '/notifications/since',
 } as const;

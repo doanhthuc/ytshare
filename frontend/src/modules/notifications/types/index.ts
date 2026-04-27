@@ -8,7 +8,13 @@ export type VideoSharedPayload = {
 };
 
 export type NotificationEvent = {
+  id: string;
   type: 'video_shared';
   timestamp: string;
+  recipientId?: string;
   payload: VideoSharedPayload;
+};
+
+export type NotificationsSinceResponse = {
+  events: NotificationEvent[];
 };
