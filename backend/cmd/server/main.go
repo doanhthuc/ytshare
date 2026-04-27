@@ -54,11 +54,12 @@ func run() error {
 	worker := jobs.NewWorker(4, 256, log)
 	defer worker.Stop()
 
-	srv := server.Build(server.Deps{
+	srv := server.Build(ctx, server.Deps{
 		Config: cfg,
 		Logger: log,
 		DB:     db,
 		Cache:  cache.NewRedisCache(redisClient),
+		Redis:  redisClient,
 		Worker: worker,
 	})
 	return server.Run(ctx, srv, log)

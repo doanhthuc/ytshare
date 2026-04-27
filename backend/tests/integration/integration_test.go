@@ -50,7 +50,7 @@ func newTestServer(t *testing.T) (*httptest.Server, func()) {
 		CORS: config.CORSConfig{AllowedOrigins: []string{"*"}},
 	}
 
-	srv := server.Build(server.Deps{
+	srv := server.Build(context.Background(), server.Deps{
 		Config: cfg,
 		Logger: log,
 		DB:     db,

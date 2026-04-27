@@ -30,12 +30,12 @@ const (
 
 // Service contains the video sharing business logic.
 type Service struct {
-	repo   Repository
-	users  users.Repository
-	cache  cache.Cache
-	hub    *notifications.Hub
-	worker *jobs.Worker
-	log    *zap.Logger
+	repo      Repository
+	users     users.Repository
+	cache     cache.Cache
+	publisher notifications.Publisher
+	worker    *jobs.Worker
+	log       *zap.Logger
 }
 
 // NewService wires the videos Service.
@@ -43,17 +43,17 @@ func NewService(
 	repo Repository,
 	usersRepo users.Repository,
 	c cache.Cache,
-	hub *notifications.Hub,
+	publisher notifications.Publisher,
 	worker *jobs.Worker,
 	log *zap.Logger,
 ) *Service {
 	return &Service{
-		repo:   repo,
-		users:  usersRepo,
-		cache:  c,
-		hub:    hub,
-		worker: worker,
-		log:    log,
+		repo:      repo,
+		users:     usersRepo,
+		cache:     c,
+		publisher: publisher,
+		worker:    worker,
+		log:       log,
 	}
 }
 
@@ -102,8 +102,8 @@ func (s *Service) Share(ctx context.Context, sharerID uuid.UUID, req ShareReques
 	}
 
 	view := ToView(*video)
-	s.worker.Submit(func(_ context.Context) error {
-		s.hub.Broadcast(notifications.Event{
+	s.worker.Submit(func(jobCtx context.Context) error {
+		if err := s.publisher.Publish(jobCtx, notifications.Event{
 			Type:      notifications.EventVideoShared,
 			Timestamp: time.Now().UTC(),
 			Payload: notifications.VideoSharedPayload{
@@ -114,7 +114,9 @@ func (s *Service) Share(ctx context.Context, sharerID uuid.UUID, req ShareReques
 				SharedByID:   sharer.ID,
 				SharedByName: sharer.Name,
 			},
-		})
+		}); err != nil {
+			s.log.Warn("videos_publish_event", zap.Error(err))
+		}
 		return nil
 	})
 

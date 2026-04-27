@@ -17,10 +17,21 @@ const (
 )
 
 // Event is the wire format sent to every connected client.
+//
+// ID is a publisher-assigned UUID that lets a reconnecting client (or a
+// transport with at-least-once semantics) detect duplicates and request
+// replay from a known position.
+//
+// RecipientID targets a single user. Zero value means "broadcast to
+// every connected client" — the existing semantics for events like
+// EventVideoShared. A non-zero value routes the event only to the
+// connections owned by that user (across every replica).
 type Event struct {
-	Type      EventType `json:"type"`
-	Timestamp time.Time `json:"timestamp"`
-	Payload   any       `json:"payload"`
+	ID          uuid.UUID `json:"id"`
+	Type        EventType `json:"type"`
+	Timestamp   time.Time `json:"timestamp"`
+	RecipientID uuid.UUID `json:"recipientId,omitempty"`
+	Payload     any       `json:"payload"`
 }
 
 // VideoSharedPayload is the payload of an EventVideoShared event.

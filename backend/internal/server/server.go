@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-playground/validator/v10"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
@@ -26,16 +27,25 @@ import (
 )
 
 // Deps groups every external dependency needed by the HTTP server.
+//
+// Redis is optional: when present, the server uses Redis Streams as
+// the cross-replica notification bus. When nil, the in-process Hub is
+// the only fan-out path (suitable for single-instance dev/tests).
 type Deps struct {
 	Config config.Config
 	Logger *zap.Logger
 	DB     *gorm.DB
 	Cache  cache.Cache
+	Redis  *redis.Client
 	Worker *jobs.Worker
 }
 
 // Build constructs a fully-wired *http.Server ready to be started.
-func Build(d Deps) *http.Server {
+//
+// ctx bounds the lifetime of any background goroutines spawned here
+// (e.g. the Redis Streams subscriber). Cancelling ctx unwinds them
+// before the HTTP server is shut down by Run.
+func Build(ctx context.Context, d Deps) *http.Server {
 	v := validator.New(validator.WithRequiredStructEnabled())
 
 	userRepo := users.NewRepository(d.DB)
@@ -45,11 +55,22 @@ func Build(d Deps) *http.Server {
 	authHandler := auth.NewHandler(authSvc, v)
 
 	hub := notifications.NewHub(d.Logger)
+	// Tear the Hub down when the server context is cancelled so the
+	// owner goroutine drains and every client's writeLoop exits
+	// cleanly during graceful shutdown.
+	go func() {
+		<-ctx.Done()
+		hub.Close()
+	}()
+
+	publisher := buildPublisher(ctx, hub, d)
+	replayer, _ := publisher.(notifications.Replayer) // nil for LocalPublisher
+
 	videoRepo := videos.NewRepository(d.DB)
 	notifSvc := notifications.NewService(userRepo, videoRepo)
-	notifHandler := notifications.NewHandler(hub, notifSvc, d.Config.CORS.AllowedOrigins, d.Logger)
+	notifHandler := notifications.NewHandler(hub, notifSvc, replayer, d.Config.CORS.AllowedOrigins, d.Logger)
 
-	videoSvc := videos.NewService(videoRepo, userRepo, d.Cache, hub, d.Worker, d.Logger)
+	videoSvc := videos.NewService(videoRepo, userRepo, d.Cache, publisher, d.Worker, d.Logger)
 	videoHandler := videos.NewHandler(videoSvc, v)
 
 	r := chi.NewRouter()
@@ -88,6 +109,27 @@ func Build(d Deps) *http.Server {
 		WriteTimeout:      30 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
+}
+
+// buildPublisher selects the notification transport based on deps.
+//
+// With Redis available we publish to a Redis stream and run a
+// per-replica subscriber that pumps stream entries into the local Hub —
+// every replica sees every event, regardless of which one produced it.
+// Without Redis, the in-process Hub is the only fan-out path.
+func buildPublisher(ctx context.Context, hub *notifications.Hub, d Deps) notifications.Publisher {
+	if d.Redis == nil {
+		d.Logger.Info("notifications_publisher", zap.String("transport", "local"))
+		return notifications.NewLocalPublisher(hub)
+	}
+	d.Logger.Info("notifications_publisher", zap.String("transport", "redis_streams"))
+	sub := notifications.NewSubscriber(d.Redis, hub, d.Logger)
+	go func() {
+		if err := sub.Run(ctx); err != nil {
+			d.Logger.Error("notifications_subscriber_exited", zap.Error(err))
+		}
+	}()
+	return notifications.NewStreamPublisher(d.Redis, d.Logger)
 }
 
 // Run starts the server and blocks until ctx is cancelled, then performs
