@@ -120,7 +120,7 @@ func Build(ctx context.Context, d Deps) *http.Server {
 func buildPublisher(ctx context.Context, hub *notifications.Hub, d Deps) notifications.Publisher {
 	if d.Redis == nil {
 		d.Logger.Info("notifications_publisher", zap.String("transport", "local"))
-		return notifications.NewLocalPublisher(hub)
+		return notifications.NewLocalPublisher(hub, d.Logger)
 	}
 	d.Logger.Info("notifications_publisher", zap.String("transport", "redis_streams"))
 	sub := notifications.NewSubscriber(d.Redis, hub, d.Logger)

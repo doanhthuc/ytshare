@@ -100,14 +100,20 @@ func (p *StreamPublisher) Publish(ctx context.Context, evt Event) error {
 	if err != nil {
 		return fmt.Errorf("notifications: marshal event: %w", err)
 	}
-	if err := p.client.XAdd(ctx, &redis.XAddArgs{
+	id, err := p.client.XAdd(ctx, &redis.XAddArgs{
 		Stream: p.key,
 		MaxLen: p.maxLen,
 		Approx: true,
 		Values: map[string]any{"data": raw},
-	}).Err(); err != nil {
+	}).Result()
+	if err != nil {
 		return fmt.Errorf("notifications: xadd: %w", err)
 	}
+	p.log.Info("notifications_published",
+		zap.String("event_id", evt.ID.String()),
+		zap.String("stream_id", id),
+		zap.String("type", string(evt.Type)),
+	)
 	return nil
 }
 
@@ -221,6 +227,12 @@ func (s *Subscriber) dispatch(msg redis.XMessage) {
 		s.log.Warn("notifications_stream_unmarshal", zap.Error(err), zap.String("id", msg.ID))
 		return
 	}
+	s.log.Info("notifications_received",
+		zap.String("event_id", evt.ID.String()),
+		zap.String("stream_id", msg.ID),
+		zap.String("type", string(evt.Type)),
+		zap.Int("clients", s.hub.Count()),
+	)
 	if evt.RecipientID == uuid.Nil {
 		s.hub.Broadcast(evt)
 	} else {

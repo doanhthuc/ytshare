@@ -123,7 +123,7 @@ func newSvc(t *testing.T, sharer *users.User) (*videos.Service, *fakeVideoRepo, 
 		repo,
 		&fakeUserRepo{user: sharer},
 		cache.NewMemoryCache(),
-		notifications.NewLocalPublisher(notifications.NewHub(log)),
+		notifications.NewLocalPublisher(notifications.NewHub(log), log),
 		worker,
 		log,
 	)

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 // Replayer is implemented by transports with a durable log. The
@@ -33,11 +34,12 @@ type Publisher interface {
 // single-instance deployments and tests.
 type LocalPublisher struct {
 	hub *Hub
+	log *zap.Logger
 }
 
 // NewLocalPublisher wires a publisher that broadcasts directly to hub.
-func NewLocalPublisher(hub *Hub) *LocalPublisher {
-	return &LocalPublisher{hub: hub}
+func NewLocalPublisher(hub *Hub, log *zap.Logger) *LocalPublisher {
+	return &LocalPublisher{hub: hub, log: log}
 }
 
 // Publish forwards evt to the local Hub. The context is accepted for
@@ -46,6 +48,13 @@ func NewLocalPublisher(hub *Hub) *LocalPublisher {
 func (p *LocalPublisher) Publish(_ context.Context, evt Event) error {
 	if evt.ID == uuid.Nil {
 		evt.ID = uuid.New()
+	}
+	if p.log != nil {
+		p.log.Info("notifications_published_local",
+			zap.String("event_id", evt.ID.String()),
+			zap.String("type", string(evt.Type)),
+			zap.Int("clients", p.hub.Count()),
+		)
 	}
 	if evt.RecipientID == uuid.Nil {
 		p.hub.Broadcast(evt)

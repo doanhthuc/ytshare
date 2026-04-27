@@ -55,7 +55,10 @@ export function useNotificationsSocket() {
 
   const handleEvent = useCallback(
     (data: NotificationEvent) => {
-      if (!data.id || !rememberSeen(data.id)) return;
+      if (!data.id || !rememberSeen(data.id)) {
+        console.debug('[notifications] skip duplicate or unidentified', data.id);
+        return;
+      }
 
       lastEventIdRef.current = data.id;
       try {
@@ -65,8 +68,14 @@ export function useNotificationsSocket() {
         // still works — we just lose cross-reload replay.
       }
 
-      if (data.type !== 'video_shared') return;
-      if (data.payload.sharedById === session?.user.id) return;
+      if (data.type !== 'video_shared') {
+        console.debug('[notifications] skip non-video_shared', data.type);
+        return;
+      }
+      if (data.payload.sharedById === session?.user.id) {
+        console.debug('[notifications] skip own share');
+        return;
+      }
 
       toast.custom((toastId) => <NotificationToast toastId={toastId} payload={data.payload} />, {
         duration: 6_000,
@@ -116,24 +125,42 @@ export function useNotificationsSocket() {
       const url = buildUrl();
       if (!url) return;
 
+      // Log the URL with the access token redacted so the user can
+      // verify host / path / since param without leaking credentials.
+      const debugUrl = url.replace(/access_token=[^&]+/, 'access_token=***');
+      console.info('[notifications] ws connecting', debugUrl);
+
       const socket = new WebSocket(url);
       socketRef.current = socket;
       let opened = false;
 
       socket.onopen = () => {
         opened = true;
+        console.info('[notifications] ws open');
       };
 
       socket.onmessage = (event) => {
         try {
-          handleEvent(JSON.parse(event.data) as NotificationEvent);
+          const parsed = JSON.parse(event.data) as NotificationEvent;
+          console.debug('[notifications] ws event', parsed.id, parsed.type);
+          handleEvent(parsed);
         } catch (err) {
           console.warn('[notifications] malformed event', err);
         }
       };
 
-      socket.onclose = () => {
+      socket.onerror = (event) => {
+        console.warn('[notifications] ws error', event);
+      };
+
+      socket.onclose = (event) => {
         if (cancelled) return;
+        console.info(
+          '[notifications] ws close',
+          'code=' + event.code,
+          'reason=' + (event.reason || '(empty)'),
+          'wasOpened=' + opened
+        );
         // If the socket never opened, the inline `?since=` replay also
         // never ran — recover the missed window over HTTP before the
         // next attempt.
