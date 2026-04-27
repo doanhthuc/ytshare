@@ -85,11 +85,9 @@ func Build(ctx context.Context, d Deps) *http.Server {
 	})
 
 	r.Route("/api/v1", func(r chi.Router) {
-		// Public routes.
 		authHandler.RegisterRoutes(r)
 		videoHandler.RegisterPublicRoutes(r)
 
-		// Protected routes.
 		r.Group(func(pr chi.Router) {
 			pr.Use(middleware.Authenticator(tokens))
 			videoHandler.RegisterPrivateRoutes(pr)

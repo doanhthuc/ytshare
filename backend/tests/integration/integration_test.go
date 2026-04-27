@@ -86,7 +86,6 @@ func TestEndToEnd_SignUpShareNotify(t *testing.T) {
 	ts, cleanup := newTestServer(t)
 	defer cleanup()
 
-	// 1) sign up the publisher
 	resp := postJSON(t, ts.URL+"/api/v1/auth/signup", "", map[string]string{
 		"email":    "pub@example.com",
 		"name":     "Publisher",
@@ -97,7 +96,6 @@ func TestEndToEnd_SignUpShareNotify(t *testing.T) {
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&publisher))
 	resp.Body.Close()
 
-	// 2) sign up the subscriber
 	resp = postJSON(t, ts.URL+"/api/v1/auth/signup", "", map[string]string{
 		"email":    "sub@example.com",
 		"name":     "Subscriber",
@@ -108,7 +106,6 @@ func TestEndToEnd_SignUpShareNotify(t *testing.T) {
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&subscriber))
 	resp.Body.Close()
 
-	// 3) subscriber opens a WebSocket
 	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/api/v1/notifications/ws"
 	u, err := url.Parse(wsURL)
 	require.NoError(t, err)
@@ -129,7 +126,6 @@ func TestEndToEnd_SignUpShareNotify(t *testing.T) {
 	// the hub's roster.
 	time.Sleep(100 * time.Millisecond)
 
-	// 4) publisher shares a video
 	resp = postJSON(t, ts.URL+"/api/v1/videos", publisher.AccessToken, map[string]string{
 		"url":   "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
 		"title": "Test video",
@@ -137,7 +133,6 @@ func TestEndToEnd_SignUpShareNotify(t *testing.T) {
 	require.Equal(t, http.StatusCreated, resp.StatusCode)
 	resp.Body.Close()
 
-	// 5) subscriber receives the broadcast
 	require.NoError(t, conn.SetReadDeadline(time.Now().Add(3*time.Second)))
 	_, msg, err := conn.ReadMessage()
 	require.NoError(t, err)

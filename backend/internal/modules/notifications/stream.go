@@ -192,7 +192,6 @@ func (s *Subscriber) Run(ctx context.Context) error {
 		}).Result()
 		switch {
 		case err == nil:
-			// Fall through to dispatch loop below.
 		case errors.Is(err, redis.Nil):
 			continue
 		case ctx.Err() != nil:

@@ -33,7 +33,6 @@ export function NotificationsPopover({ open, onClose, anchorRef }: Props) {
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
     useNotificationsFeed(open);
 
-  // Close on outside click / Escape
   useEffect(() => {
     if (!open) return;
     function onDocClick(e: MouseEvent) {
@@ -53,7 +52,6 @@ export function NotificationsPopover({ open, onClose, anchorRef }: Props) {
     };
   }, [open, onClose, anchorRef]);
 
-  // Infinite scroll via IntersectionObserver
   useEffect(() => {
     if (!open) return;
     const sentinel = sentinelRef.current;

@@ -131,7 +131,6 @@ func (s *Service) List(ctx context.Context, limit, offset int) (ListResponse, er
 		case err == nil:
 			return cached, nil
 		case errors.Is(err, cache.ErrMiss):
-			// fall through
 		default:
 			s.log.Warn("videos_cache_get", zap.Error(err))
 		}
