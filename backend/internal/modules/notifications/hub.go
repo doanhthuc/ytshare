@@ -141,95 +141,114 @@ func (h *Hub) publish(evt Event, recipient uuid.UUID) {
 	}
 }
 
+// clientRegistry is the run-loop's private view of connected clients.
+// All of its methods are intended to be called from a single goroutine;
+// it owns the underlying maps and is not safe for concurrent use.
+type clientRegistry struct {
+	byUser map[uuid.UUID]map[*Client]struct{}
+	total  int
+	count  *atomic.Int64
+	log    *zap.Logger
+}
+
+func newClientRegistry(count *atomic.Int64, log *zap.Logger) *clientRegistry {
+	return &clientRegistry{
+		byUser: make(map[uuid.UUID]map[*Client]struct{}),
+		count:  count,
+		log:    log,
+	}
+}
+
+func (r *clientRegistry) add(c *Client) {
+	set, ok := r.byUser[c.userID]
+	if !ok {
+		set = make(map[*Client]struct{})
+		r.byUser[c.userID] = set
+	}
+	if _, exists := set[c]; exists {
+		return
+	}
+	set[c] = struct{}{}
+	r.total++
+	r.count.Store(int64(r.total))
+}
+
+func (r *clientRegistry) drop(c *Client, reason string) {
+	set, ok := r.byUser[c.userID]
+	if !ok {
+		return
+	}
+	if _, exists := set[c]; !exists {
+		return
+	}
+	delete(set, c)
+	if len(set) == 0 {
+		delete(r.byUser, c.userID)
+	}
+	r.total--
+	close(c.send)
+	r.count.Store(int64(r.total))
+	r.log.Info(reason, zap.Int("clients", r.total))
+}
+
+func (r *clientRegistry) deliver(c *Client, payload []byte) bool {
+	select {
+	case c.send <- payload:
+		return true
+	default:
+		r.log.Warn("ws_slow_client_dropped", zap.String("user", c.userID.String()))
+		return false
+	}
+}
+
+func (r *clientRegistry) deliverTo(set map[*Client]struct{}, payload []byte) {
+	for c := range set {
+		if !r.deliver(c, payload) {
+			r.drop(c, "ws_client_unregistered")
+		}
+	}
+}
+
+func (r *clientRegistry) dispatch(msg dispatchMsg) {
+	if msg.recipient == uuid.Nil {
+		for _, set := range r.byUser {
+			r.deliverTo(set, msg.payload)
+		}
+		return
+	}
+	if set, ok := r.byUser[msg.recipient]; ok {
+		r.deliverTo(set, msg.payload)
+	}
+}
+
+func (r *clientRegistry) closeAll() {
+	for _, set := range r.byUser {
+		for c := range set {
+			close(c.send)
+		}
+	}
+	r.count.Store(0)
+}
+
 // run owns the clients map. It is the only goroutine that reads or
 // writes the map or closes any client's send channel.
 func (h *Hub) run() {
-	byUser := make(map[uuid.UUID]map[*Client]struct{})
-	total := 0
+	reg := newClientRegistry(&h.count, h.log)
 	defer close(h.done)
-	defer func() {
-		for _, set := range byUser {
-			for c := range set {
-				close(c.send)
-			}
-		}
-		h.count.Store(0)
-	}()
-
-	addClient := func(c *Client) {
-		set, ok := byUser[c.userID]
-		if !ok {
-			set = make(map[*Client]struct{})
-			byUser[c.userID] = set
-		}
-		if _, exists := set[c]; exists {
-			return
-		}
-		set[c] = struct{}{}
-		total++
-		h.count.Store(int64(total))
-	}
-
-	dropClient := func(c *Client, reason string) {
-		set, ok := byUser[c.userID]
-		if !ok {
-			return
-		}
-		if _, exists := set[c]; !exists {
-			return
-		}
-		delete(set, c)
-		if len(set) == 0 {
-			delete(byUser, c.userID)
-		}
-		total--
-		close(c.send)
-		h.count.Store(int64(total))
-		h.log.Info(reason, zap.Int("clients", total))
-	}
-
-	deliver := func(c *Client, msg []byte) bool {
-		select {
-		case c.send <- msg:
-			return true
-		default:
-			h.log.Warn("ws_slow_client_dropped", zap.String("user", c.userID.String()))
-			return false
-		}
-	}
-
-	deliverTo := func(set map[*Client]struct{}, payload []byte) {
-		for c := range set {
-			if !deliver(c, payload) {
-				dropClient(c, "ws_client_unregistered")
-			}
-		}
-	}
-
-	dispatch := func(msg dispatchMsg) {
-		if msg.recipient == uuid.Nil {
-			for _, set := range byUser {
-				deliverTo(set, msg.payload)
-			}
-			return
-		}
-		if set, ok := byUser[msg.recipient]; ok {
-			deliverTo(set, msg.payload)
-		}
-	}
+	defer reg.closeAll()
 
 	for {
 		select {
 		case <-h.stop:
 			return
 		case req := <-h.register:
-			addClient(req.client)
+			reg.add(req.client)
 			close(req.ack)
-			h.log.Info("ws_client_registered", zap.Int("clients", total))
+			h.log.Info("ws_client_registered", zap.Int("clients", reg.total))
 		case c := <-h.unregister:
-			dropClient(c, "ws_client_unregistered")
+			reg.drop(c, "ws_client_unregistered")
 		case msg := <-h.dispatch:
-			dispatch(msg)
+			reg.dispatch(msg)
 		}
 	}
 }

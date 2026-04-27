@@ -18,7 +18,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -29,9 +29,9 @@ jobs:
           package_json_file: frontend/package.json
           run_install: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: "24"
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
@@ -39,5 +39,5 @@ jobs:
       - run: pnpm lint
       - run: pnpm format:check
       - run: pnpm typecheck
-      - run: pnpm test --run
+      - run: pnpm vitest --run
       - run: pnpm build
