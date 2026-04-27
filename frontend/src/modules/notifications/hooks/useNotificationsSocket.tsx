@@ -68,10 +68,9 @@ export function useNotificationsSocket() {
       if (data.type !== 'video_shared') return;
       if (data.payload.sharedById === session?.user.id) return;
 
-      toast.custom(
-        (toastId) => <NotificationToast toastId={toastId} payload={data.payload} />,
-        { duration: 6_000 }
-      );
+      toast.custom((toastId) => <NotificationToast toastId={toastId} payload={data.payload} />, {
+        duration: 6_000,
+      });
 
       // Optimistically bump the bell badge so it updates instantly,
       // without waiting for the backend roundtrip that

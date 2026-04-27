@@ -179,26 +179,24 @@ func NewSubscriber(client *redis.Client, hub *Hub, log *zap.Logger, opts ...Stre
 func (s *Subscriber) Run(ctx context.Context) error {
 	lastID := "$"
 	for {
-		if ctx.Err() != nil {
-			return nil
-		}
 		streams, err := s.client.XRead(ctx, &redis.XReadArgs{
 			Streams: []string{s.key, lastID},
 			Block:   streamReadBlock,
 			Count:   100,
 		}).Result()
-		if err != nil {
-			if errors.Is(err, redis.Nil) || errors.Is(err, context.Canceled) {
-				continue
-			}
-			if ctx.Err() != nil {
-				return nil
-			}
+		switch {
+		case err == nil:
+			// Fall through to dispatch loop below.
+		case errors.Is(err, redis.Nil):
+			continue
+		case ctx.Err() != nil:
+			return nil //nolint:nilerr // ctx cancellation is a clean shutdown signal
+		default:
 			s.log.Warn("notifications_xread", zap.Error(err))
 			// Back off briefly so a Redis outage does not hot-loop.
 			select {
 			case <-ctx.Done():
-				return nil
+				return nil //nolint:nilerr // ctx cancellation is a clean shutdown signal
 			case <-time.After(time.Second):
 			}
 			continue

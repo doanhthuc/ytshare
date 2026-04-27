@@ -31,10 +31,7 @@ export function Sidebar() {
     >
       {items.map((item) => {
         const Icon = item.icon;
-        const isActive =
-          item.to === '/'
-            ? pathname === '/'
-            : pathname.startsWith(item.to);
+        const isActive = item.to === '/' ? pathname === '/' : pathname.startsWith(item.to);
 
         return (
           <Link

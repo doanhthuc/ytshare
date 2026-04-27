@@ -198,41 +198,38 @@ func (h *Hub) run() {
 		}
 	}
 
+	deliverTo := func(set map[*Client]struct{}, payload []byte) {
+		for c := range set {
+			if !deliver(c, payload) {
+				dropClient(c, "ws_client_unregistered")
+			}
+		}
+	}
+
+	dispatch := func(msg dispatchMsg) {
+		if msg.recipient == uuid.Nil {
+			for _, set := range byUser {
+				deliverTo(set, msg.payload)
+			}
+			return
+		}
+		if set, ok := byUser[msg.recipient]; ok {
+			deliverTo(set, msg.payload)
+		}
+	}
+
 	for {
 		select {
 		case <-h.stop:
 			return
-
 		case req := <-h.register:
 			addClient(req.client)
 			close(req.ack)
 			h.log.Info("ws_client_registered", zap.Int("clients", total))
-
 		case c := <-h.unregister:
 			dropClient(c, "ws_client_unregistered")
-
 		case msg := <-h.dispatch:
-			if msg.recipient == uuid.Nil {
-				// Broadcast — fan out to every client.
-				for _, set := range byUser {
-					for c := range set {
-						if !deliver(c, msg.payload) {
-							dropClient(c, "ws_client_unregistered")
-						}
-					}
-				}
-			} else {
-				// Targeted — only this user's connections.
-				set, ok := byUser[msg.recipient]
-				if !ok {
-					continue
-				}
-				for c := range set {
-					if !deliver(c, msg.payload) {
-						dropClient(c, "ws_client_unregistered")
-					}
-				}
-			}
+			dispatch(msg)
 		}
 	}
 }

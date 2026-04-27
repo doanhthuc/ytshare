@@ -13,9 +13,7 @@ export async function getUnreadCount(): Promise<UnreadCountResponse> {
 }
 
 export async function markNotificationsSeen(): Promise<MarkSeenResponse> {
-  const { data } = await httpClient.post<MarkSeenResponse>(
-    API_ENDPOINTS.notificationsMarkSeen
-  );
+  const { data } = await httpClient.post<MarkSeenResponse>(API_ENDPOINTS.notificationsMarkSeen);
   return data;
 }
 

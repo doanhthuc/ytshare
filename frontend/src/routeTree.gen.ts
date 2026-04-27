@@ -8,75 +8,75 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as PublicRouteImport } from './routes/_public'
-import { Route as PrivateRouteImport } from './routes/_private'
-import { Route as PrivateIndexRouteImport } from './routes/_private/index'
-import { Route as PublicSignupRouteImport } from './routes/_public/signup'
-import { Route as PublicSigninRouteImport } from './routes/_public/signin'
-import { Route as PrivateAuthRouteImport } from './routes/_private/_auth'
-import { Route as PrivateAuthShareRouteImport } from './routes/_private/_auth.share'
+import { Route as rootRouteImport } from './routes/__root';
+import { Route as PublicRouteImport } from './routes/_public';
+import { Route as PrivateRouteImport } from './routes/_private';
+import { Route as PrivateIndexRouteImport } from './routes/_private/index';
+import { Route as PublicSignupRouteImport } from './routes/_public/signup';
+import { Route as PublicSigninRouteImport } from './routes/_public/signin';
+import { Route as PrivateAuthRouteImport } from './routes/_private/_auth';
+import { Route as PrivateAuthShareRouteImport } from './routes/_private/_auth.share';
 
 const PublicRoute = PublicRouteImport.update({
   id: '/_public',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const PrivateRoute = PrivateRouteImport.update({
   id: '/_private',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const PrivateIndexRoute = PrivateIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => PrivateRoute,
-} as any)
+} as any);
 const PublicSignupRoute = PublicSignupRouteImport.update({
   id: '/signup',
   path: '/signup',
   getParentRoute: () => PublicRoute,
-} as any)
+} as any);
 const PublicSigninRoute = PublicSigninRouteImport.update({
   id: '/signin',
   path: '/signin',
   getParentRoute: () => PublicRoute,
-} as any)
+} as any);
 const PrivateAuthRoute = PrivateAuthRouteImport.update({
   id: '/_auth',
   getParentRoute: () => PrivateRoute,
-} as any)
+} as any);
 const PrivateAuthShareRoute = PrivateAuthShareRouteImport.update({
   id: '/share',
   path: '/share',
   getParentRoute: () => PrivateAuthRoute,
-} as any)
+} as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof PrivateIndexRoute
-  '/signin': typeof PublicSigninRoute
-  '/signup': typeof PublicSignupRoute
-  '/share': typeof PrivateAuthShareRoute
+  '/': typeof PrivateIndexRoute;
+  '/signin': typeof PublicSigninRoute;
+  '/signup': typeof PublicSignupRoute;
+  '/share': typeof PrivateAuthShareRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof PrivateIndexRoute
-  '/signin': typeof PublicSigninRoute
-  '/signup': typeof PublicSignupRoute
-  '/share': typeof PrivateAuthShareRoute
+  '/': typeof PrivateIndexRoute;
+  '/signin': typeof PublicSigninRoute;
+  '/signup': typeof PublicSignupRoute;
+  '/share': typeof PrivateAuthShareRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/_private': typeof PrivateRouteWithChildren
-  '/_public': typeof PublicRouteWithChildren
-  '/_private/_auth': typeof PrivateAuthRouteWithChildren
-  '/_public/signin': typeof PublicSigninRoute
-  '/_public/signup': typeof PublicSignupRoute
-  '/_private/': typeof PrivateIndexRoute
-  '/_private/_auth/share': typeof PrivateAuthShareRoute
+  __root__: typeof rootRouteImport;
+  '/_private': typeof PrivateRouteWithChildren;
+  '/_public': typeof PublicRouteWithChildren;
+  '/_private/_auth': typeof PrivateAuthRouteWithChildren;
+  '/_public/signin': typeof PublicSigninRoute;
+  '/_public/signup': typeof PublicSignupRoute;
+  '/_private/': typeof PrivateIndexRoute;
+  '/_private/_auth/share': typeof PrivateAuthShareRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/signin' | '/signup' | '/share'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/signin' | '/signup' | '/share'
+  fileRoutesByFullPath: FileRoutesByFullPath;
+  fullPaths: '/' | '/signin' | '/signup' | '/share';
+  fileRoutesByTo: FileRoutesByTo;
+  to: '/' | '/signin' | '/signup' | '/share';
   id:
     | '__root__'
     | '/_private'
@@ -85,110 +85,106 @@ export interface FileRouteTypes {
     | '/_public/signin'
     | '/_public/signup'
     | '/_private/'
-    | '/_private/_auth/share'
-  fileRoutesById: FileRoutesById
+    | '/_private/_auth/share';
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  PrivateRoute: typeof PrivateRouteWithChildren
-  PublicRoute: typeof PublicRouteWithChildren
+  PrivateRoute: typeof PrivateRouteWithChildren;
+  PublicRoute: typeof PublicRouteWithChildren;
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/_public': {
-      id: '/_public'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof PublicRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/_public';
+      path: '';
+      fullPath: '/';
+      preLoaderRoute: typeof PublicRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/_private': {
-      id: '/_private'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof PrivateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/_private';
+      path: '';
+      fullPath: '/';
+      preLoaderRoute: typeof PrivateRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/_private/': {
-      id: '/_private/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof PrivateIndexRouteImport
-      parentRoute: typeof PrivateRoute
-    }
+      id: '/_private/';
+      path: '/';
+      fullPath: '/';
+      preLoaderRoute: typeof PrivateIndexRouteImport;
+      parentRoute: typeof PrivateRoute;
+    };
     '/_public/signup': {
-      id: '/_public/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof PublicSignupRouteImport
-      parentRoute: typeof PublicRoute
-    }
+      id: '/_public/signup';
+      path: '/signup';
+      fullPath: '/signup';
+      preLoaderRoute: typeof PublicSignupRouteImport;
+      parentRoute: typeof PublicRoute;
+    };
     '/_public/signin': {
-      id: '/_public/signin'
-      path: '/signin'
-      fullPath: '/signin'
-      preLoaderRoute: typeof PublicSigninRouteImport
-      parentRoute: typeof PublicRoute
-    }
+      id: '/_public/signin';
+      path: '/signin';
+      fullPath: '/signin';
+      preLoaderRoute: typeof PublicSigninRouteImport;
+      parentRoute: typeof PublicRoute;
+    };
     '/_private/_auth': {
-      id: '/_private/_auth'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof PrivateAuthRouteImport
-      parentRoute: typeof PrivateRoute
-    }
+      id: '/_private/_auth';
+      path: '';
+      fullPath: '/';
+      preLoaderRoute: typeof PrivateAuthRouteImport;
+      parentRoute: typeof PrivateRoute;
+    };
     '/_private/_auth/share': {
-      id: '/_private/_auth/share'
-      path: '/share'
-      fullPath: '/share'
-      preLoaderRoute: typeof PrivateAuthShareRouteImport
-      parentRoute: typeof PrivateAuthRoute
-    }
+      id: '/_private/_auth/share';
+      path: '/share';
+      fullPath: '/share';
+      preLoaderRoute: typeof PrivateAuthShareRouteImport;
+      parentRoute: typeof PrivateAuthRoute;
+    };
   }
 }
 
 interface PrivateAuthRouteChildren {
-  PrivateAuthShareRoute: typeof PrivateAuthShareRoute
+  PrivateAuthShareRoute: typeof PrivateAuthShareRoute;
 }
 
 const PrivateAuthRouteChildren: PrivateAuthRouteChildren = {
   PrivateAuthShareRoute: PrivateAuthShareRoute,
-}
+};
 
-const PrivateAuthRouteWithChildren = PrivateAuthRoute._addFileChildren(
-  PrivateAuthRouteChildren,
-)
+const PrivateAuthRouteWithChildren = PrivateAuthRoute._addFileChildren(PrivateAuthRouteChildren);
 
 interface PrivateRouteChildren {
-  PrivateAuthRoute: typeof PrivateAuthRouteWithChildren
-  PrivateIndexRoute: typeof PrivateIndexRoute
+  PrivateAuthRoute: typeof PrivateAuthRouteWithChildren;
+  PrivateIndexRoute: typeof PrivateIndexRoute;
 }
 
 const PrivateRouteChildren: PrivateRouteChildren = {
   PrivateAuthRoute: PrivateAuthRouteWithChildren,
   PrivateIndexRoute: PrivateIndexRoute,
-}
+};
 
-const PrivateRouteWithChildren =
-  PrivateRoute._addFileChildren(PrivateRouteChildren)
+const PrivateRouteWithChildren = PrivateRoute._addFileChildren(PrivateRouteChildren);
 
 interface PublicRouteChildren {
-  PublicSigninRoute: typeof PublicSigninRoute
-  PublicSignupRoute: typeof PublicSignupRoute
+  PublicSigninRoute: typeof PublicSigninRoute;
+  PublicSignupRoute: typeof PublicSignupRoute;
 }
 
 const PublicRouteChildren: PublicRouteChildren = {
   PublicSigninRoute: PublicSigninRoute,
   PublicSignupRoute: PublicSignupRoute,
-}
+};
 
-const PublicRouteWithChildren =
-  PublicRoute._addFileChildren(PublicRouteChildren)
+const PublicRouteWithChildren = PublicRoute._addFileChildren(PublicRouteChildren);
 
 const rootRouteChildren: RootRouteChildren = {
   PrivateRoute: PrivateRouteWithChildren,
   PublicRoute: PublicRouteWithChildren,
-}
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
