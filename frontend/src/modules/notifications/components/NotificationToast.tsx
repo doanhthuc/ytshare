@@ -22,7 +22,7 @@ export function NotificationToast({ toastId, payload }: Props) {
   return (
     <div
       role="status"
-      className="pointer-events-auto relative flex w-full max-w-sm gap-3 rounded-xl border border-(--color-border) bg-(--color-surface-1) p-3 pr-8 shadow-lg"
+      className="pointer-events-auto relative flex w-full max-w-sm gap-3 rounded-xl border border-(--color-border) bg-card p-3 pr-8 shadow-lg"
     >
       <a
         href={payload.youtubeId ? `https://www.youtube.com/watch?v=${payload.youtubeId}` : '#'}

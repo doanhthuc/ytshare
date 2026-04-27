@@ -27,7 +27,7 @@ export function App() {
     <ErrorBoundary FallbackComponent={ErrorFallback}>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
-        <Toaster richColors position="top-right" closeButton />
+        <Toaster richColors position="bottom-right" closeButton />
         {import.meta.env.DEV ? (
           <TanStackRouterDevtools router={router} position="bottom-right" />
         ) : null}
